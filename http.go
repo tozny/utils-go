@@ -14,6 +14,11 @@ import (
 	"strings"
 )
 
+const (
+	ToznyClientIDHeader                = "X-TOZNY-CLIENT-ID"
+	ToznyOpenAuthenticationTokenHeader = "X-TOZNY-TOT"
+)
+
 var (
 	SupportedAuthTypes               = [...]string{"Bearer"}
 	ErrorInvalidAuthorizationHeader  = errors.New("InvalidAuthorizationHeader")
@@ -95,7 +100,10 @@ func E3dbAuthHandler(h http.Handler, e3dbAuth authClient.E3dbAuthClient, private
 			HandleError(w, http.StatusUnauthorized, ErrorInvalidAuthToken)
 			return
 		}
-		// If valid, continue processing request
+		// Add the clients id and token to the request headers
+		r.Header.Set(ToznyClientIDHeader, validateTokenResponse.ClientId)
+		r.Header.Set(ToznyOpenAuthenticationTokenHeader, token)
+		// Authenticated, continue processing request
 		h.ServeHTTP(w, r)
 	})
 }
