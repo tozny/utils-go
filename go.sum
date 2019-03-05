@@ -15,8 +15,8 @@ github.com/pmezard/go-difflib v1.0.0/go.mod h1:iKH77koFhYxTK1pcRnkKkqfTogsbg7gZN
 github.com/stretchr/objx v0.1.0/go.mod h1:HFkY916IF+rwdDfMAkV7OtwuqBVzrE8GR6GFx+wExME=
 github.com/stretchr/testify v1.3.0 h1:TivCn/peBQ7UY8ooIcPgZFpTNSz0Q2U6UrFlUfqbe0Q=
 github.com/stretchr/testify v1.3.0/go.mod h1:M5WIy9Dh21IEIfnGCwXGc5bZfKNJtfHm1UVUgZn+9EI=
-github.com/tozny/e3db-clients-go v0.0.6 h1:uzx47MrXqzmsQa00BUqOQFtrZ0opTYtXaMgmjV/IHLI=
-github.com/tozny/e3db-clients-go v0.0.6/go.mod h1:WZ/FZ8gl5fSafMA5MCt37fMg0Nh5YBDlxErLvZNKYe8=
+github.com/tozny/e3db-clients-go v0.0.9 h1:7XdIiNnOg6j3/3R7ODNq4mRIxzrb66kHDawa3msvacM=
+github.com/tozny/e3db-clients-go v0.0.9/go.mod h1:WZ/FZ8gl5fSafMA5MCt37fMg0Nh5YBDlxErLvZNKYe8=
 github.com/tozny/e3db-go/v2 v2.1.1 h1:esYqwmaxUpvIS0R7lcvifyfERSx/fSWs3fYu+5GQHR4=
 github.com/tozny/e3db-go/v2 v2.1.1/go.mod h1:fm4qLvM+lVyILrB+GEC/1pmwHXlzPFpY7+fB9RB6xio=
 golang.org/x/crypto v0.0.0-20181112202954-3d3f9f413869 h1:kkXA53yGe04D0adEYJwEVQjeBppL01Exg+fnMjfUraU=
