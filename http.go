@@ -24,6 +24,9 @@ var (
 	ErrorInvalidAuthorizationHeader  = errors.New("InvalidAuthorizationHeader")
 	ErrorUnsuportedAuthorizationType = errors.New(fmt.Sprintf("UnsuportedAuthorizationType, supported types are %v", SupportedAuthTypes))
 	ErrorInvalidAuthToken            = errors.New("InvalidAuthToken")
+	DefaultCORSHeaders               = []http.Header{
+		map[string][]string{"Access-Control-Allow-Origin": []string{"*"}},
+	}
 )
 
 // JsonLoggingHandler wraps an HTTP handler and logs
@@ -79,6 +82,11 @@ func HandleError(w http.ResponseWriter, statusCode int, response interface{}) {
 	json.NewEncoder(w).Encode(response)
 }
 
+// HandleOptionsRequest is a generic handler for responding 200 OK for an HTTP Options request.
+func HandleOptionsRequest(w http.ResponseWriter) {
+	w.WriteHeader(http.StatusOK)
+}
+
 // E3dbAuthHandler provides http middleware for enforcing requests as coming from e3db
 // authenticated entities (either external or internal clients)
 func E3dbAuthHandler(h http.Handler, e3dbAuth authClient.E3dbAuthClient, privateService bool, logger *log.Logger) http.Handler {
@@ -104,6 +112,26 @@ func E3dbAuthHandler(h http.Handler, e3dbAuth authClient.E3dbAuthClient, private
 		r.Header.Set(ToznyClientIDHeader, validateTokenResponse.ClientId)
 		r.Header.Set(ToznyOpenAuthenticationTokenHeader, token)
 		// Authenticated, continue processing request
+		h.ServeHTTP(w, r)
+	})
+}
+
+// CORSHandler provides http middleware for allowing cross origin requests by
+// decorating the request with the provided CORS headers and returning default 200 OK for any options requests
+func CORSHandler(h http.Handler, corsHeaders []http.Header) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		for _, corsHeader := range corsHeaders {
+			for key, values := range corsHeader {
+				for _, value := range values {
+					w.Header().Set(key, value)
+				}
+			}
+		}
+		switch r.Method {
+		case http.MethodOptions:
+			HandleOptionsRequest(w)
+			return
+		}
 		h.ServeHTTP(w, r)
 	})
 }
