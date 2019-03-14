@@ -25,7 +25,13 @@ var (
 	ErrorUnsuportedAuthorizationType = errors.New(fmt.Sprintf("UnsuportedAuthorizationType, supported types are %v", SupportedAuthTypes))
 	ErrorInvalidAuthToken            = errors.New("InvalidAuthToken")
 	DefaultCORSHeaders               = []http.Header{
-		map[string][]string{"Access-Control-Allow-Origin": []string{"*"}},
+		// https://developer.mozilla.org/en-US/docs/Web/HTTP/CORS#The_HTTP_response_headers
+		map[string][]string{
+			"Access-Control-Allow-Origin":      []string{"*"},
+			"Access-Control-Allow-Methods":     []string{"*"},
+			"Access-Control-Allow-Headers":     []string{"*"},
+			"Access-Control-Allow-Credentials": []string{"true"},
+		},
 	}
 )
 
