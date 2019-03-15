@@ -29,8 +29,9 @@ var (
 		map[string][]string{
 			"Access-Control-Allow-Origin":      []string{"*"},
 			"Access-Control-Allow-Methods":     []string{"*"},
-			"Access-Control-Allow-Headers":     []string{"Authorization, *"},
+			"Access-Control-Allow-Headers":     []string{"Authorization, Content-Type, *"}, // Because to Firefox * does not mean all.
 			"Access-Control-Allow-Credentials": []string{"true"},
+			"Access-Control-Max-Age":           []string{"86400"},
 		},
 	}
 )
