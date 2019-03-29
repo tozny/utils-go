@@ -20,11 +20,11 @@ const (
 )
 
 var (
-	SupportedAuthTypes               = [...]string{"Bearer"}
-	ErrorInvalidAuthorizationHeader  = errors.New("InvalidAuthorizationHeader")
-	ErrorUnsuportedAuthorizationType = errors.New(fmt.Sprintf("UnsuportedAuthorizationType, supported types are %v", SupportedAuthTypes))
-	ErrorInvalidAuthToken            = errors.New("InvalidAuthToken")
-	DefaultCORSHeaders               = []http.Header{
+	SupportedAuthTypes                = [...]string{"Bearer"}
+	ErrorInvalidAuthorizationHeader   = errors.New("InvalidAuthorizationHeader")
+	ErrorUnsupportedAuthorizationType = errors.New(fmt.Sprintf("UnsupportedAuthorizationType, supported types are %v", SupportedAuthTypes))
+	ErrorInvalidAuthToken             = errors.New("InvalidAuthToken")
+	DefaultCORSHeaders                = []http.Header{
 		// https://developer.mozilla.org/en-US/docs/Web/HTTP/CORS#The_HTTP_response_headers
 		map[string][]string{
 			"Access-Control-Allow-Origin":      []string{"*"},
@@ -75,7 +75,7 @@ func ExtractBearerToken(r *http.Request) (string, error) {
 		}
 	}
 	if invalidAuthType {
-		return authToken, ErrorUnsuportedAuthorizationType
+		return authToken, ErrorUnsupportedAuthorizationType
 	}
 	authToken = authParts[1]
 	return authToken, nil
