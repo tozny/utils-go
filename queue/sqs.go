@@ -56,7 +56,7 @@ func (q *SQSQueue) DeleteMessage(messageID string) error {
 	return err
 }
 
-// EnqueueMessage enqueus a single message to the queue, returning error (if any).
+// EnqueueMessage enqueues a single message to the queue, returning error (if any).
 func (q *SQSQueue) EnqueueMessage(message Message) error {
 	// Construct SendMessageRequest
 	sendMessageRequest := &sqs.SendMessageInput{
@@ -186,7 +186,11 @@ func convertSQSMessageToQueueMessage(sqsMessage *sqs.Message) (*Message, error) 
 // convertTagsToSQSMessageAttributes converts a message's tag(s) to a map of tag key
 // tag key to a SQS MessageAttributeValue.
 func convertTagsToSQSMessageAttributes(tags map[string]string) map[string]*sqs.MessageAttributeValue {
-	messageAttributes := map[string]*sqs.MessageAttributeValue{}
+	var messageAttributes map[string]*sqs.MessageAttributeValue
+	if len(tags) == 0 {
+		return messageAttributes
+	}
+	messageAttributes = map[string]*sqs.MessageAttributeValue{}
 	for key, value := range tags {
 		messageAttributes[key] = &sqs.MessageAttributeValue{
 			DataType:    aws.String("String"),
