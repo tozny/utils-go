@@ -12,16 +12,18 @@ type ServiceLogger struct {
 	Info        *log.Logger
 	Fatal       *log.Logger
 	Error       *log.Logger
+	*log.Logger
 }
 
 // NewServiceLogger returns a logger with designated logging levels for a particular service.
 func NewServiceLogger(serviceName string) ServiceLogger {
 	logger := ServiceLogger{
-		ServiceName: serviceName,
-		Debug:       log.New(os.Stdout, "DEBUG: "+serviceName+":", log.LstdFlags|log.Lshortfile|log.Lmicroseconds),
-		Info:        log.New(os.Stdout, "INFO: "+serviceName+":", log.LstdFlags|log.Lshortfile|log.Lmicroseconds),
-		Fatal:       log.New(os.Stdout, "FATAL: "+serviceName+":", log.LstdFlags|log.Lshortfile|log.Lmicroseconds),
-		Error:       log.New(os.Stdout, "ERROR: "+serviceName+":", log.LstdFlags|log.Lshortfile|log.Lmicroseconds),
+		serviceName,
+		log.New(os.Stdout, "DEBUG: "+serviceName+":", log.LstdFlags|log.Lshortfile|log.Lmicroseconds),
+		log.New(os.Stdout, "INFO: "+serviceName+":", log.LstdFlags|log.Lshortfile|log.Lmicroseconds),
+		log.New(os.Stdout, "FATAL: "+serviceName+":", log.LstdFlags|log.Lshortfile|log.Lmicroseconds),
+		log.New(os.Stdout, "ERROR: "+serviceName+":", log.LstdFlags|log.Lshortfile|log.Lmicroseconds),
+		log.New(os.Stdout, serviceName+":", log.LstdFlags|log.Lshortfile|log.Lmicroseconds),
 	}
 	return logger
 }
