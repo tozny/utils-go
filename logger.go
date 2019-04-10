@@ -20,11 +20,11 @@ type ServiceLogger struct {
 func NewServiceLogger(serviceName string, debug bool) ServiceLogger {
 	logger := ServiceLogger{
 		serviceName,
-		log.New(os.Stdout, "DEBUG: "+serviceName+":", log.LstdFlags|log.Lshortfile|log.Lmicroseconds),
-		log.New(os.Stdout, "INFO: "+serviceName+":", log.LstdFlags|log.Lshortfile|log.Lmicroseconds),
-		log.New(os.Stdout, "FATAL: "+serviceName+":", log.LstdFlags|log.Lshortfile|log.Lmicroseconds),
-		log.New(os.Stdout, "ERROR: "+serviceName+":", log.LstdFlags|log.Lshortfile|log.Lmicroseconds),
-		log.New(os.Stdout, serviceName+":", log.LstdFlags|log.Lshortfile|log.Lmicroseconds),
+		log.New(os.Stdout, "DEBUG: "+serviceName+": ", log.LstdFlags|log.Lshortfile|log.Lmicroseconds),
+		log.New(os.Stdout, "INFO: "+serviceName+": ", log.LstdFlags|log.Lshortfile|log.Lmicroseconds),
+		log.New(os.Stdout, "FATAL: "+serviceName+": ", log.LstdFlags|log.Lshortfile|log.Lmicroseconds),
+		log.New(os.Stdout, "ERROR: "+serviceName+": ", log.LstdFlags|log.Lshortfile|log.Lmicroseconds),
+		log.New(os.Stdout, serviceName+": ", log.LstdFlags|log.Lshortfile|log.Lmicroseconds),
 	}
 	if debug == false {
 		logger.Debug.SetOutput(ioutil.Discard)
