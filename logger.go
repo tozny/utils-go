@@ -1,6 +1,7 @@
 package utils
 
 import (
+	"io/ioutil"
 	"log"
 	"os"
 )
@@ -16,7 +17,7 @@ type ServiceLogger struct {
 }
 
 // NewServiceLogger returns a logger with designated logging levels for a particular service.
-func NewServiceLogger(serviceName string) ServiceLogger {
+func NewServiceLogger(serviceName string, debug bool) ServiceLogger {
 	logger := ServiceLogger{
 		serviceName,
 		log.New(os.Stdout, "DEBUG: "+serviceName+":", log.LstdFlags|log.Lshortfile|log.Lmicroseconds),
@@ -24,6 +25,9 @@ func NewServiceLogger(serviceName string) ServiceLogger {
 		log.New(os.Stdout, "FATAL: "+serviceName+":", log.LstdFlags|log.Lshortfile|log.Lmicroseconds),
 		log.New(os.Stdout, "ERROR: "+serviceName+":", log.LstdFlags|log.Lshortfile|log.Lmicroseconds),
 		log.New(os.Stdout, serviceName+":", log.LstdFlags|log.Lshortfile|log.Lmicroseconds),
+	}
+	if debug == false {
+		logger.Debug.SetOutput(ioutil.Discard)
 	}
 	return logger
 }
