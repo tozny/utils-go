@@ -17,6 +17,8 @@ import (
 const (
 	ToznyClientIDHeader                = "X-TOZNY-CLIENT-ID"
 	ToznyOpenAuthenticationTokenHeader = "X-TOZNY-TOT"
+	HealthCheckPathSuffix              = "/healthcheck"
+	ServiceCheckPathSuffix             = "/servicecheck"
 )
 
 var (
@@ -95,9 +97,18 @@ func HandleOptionsRequest(w http.ResponseWriter) {
 }
 
 // E3dbAuthHandler provides http middleware for enforcing requests as coming from e3db
-// authenticated entities (either external or internal clients)
+// authenticated entities (either external or internal clients) for any request with a path
+// not ending in `HealthCheckPathSuffix` or `ServiceCheckPathSuffix`
 func E3dbAuthHandler(h http.Handler, e3dbAuth authClient.E3dbAuthClient, privateService bool, logger *log.Logger) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// Check to see if this request is a health or service check requests
+		requestPath := r.URL.Path
+		isMonitoringRequest := strings.HasSuffix(requestPath, HealthCheckPathSuffix) || strings.HasSuffix(requestPath, ServiceCheckPathSuffix)
+		if isMonitoringRequest {
+			// NoOp authentication, continue processing request
+			h.ServeHTTP(w, r)
+			return
+		}
 		token, err := ExtractBearerToken(r)
 		if err != nil {
 			logger.Printf("E3dbAuthHandler: error extracting bearer token %s\n", err)
