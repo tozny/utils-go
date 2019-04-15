@@ -25,6 +25,26 @@ type ServiceLogger struct {
 	Debug    *log.Logger
 }
 
+// Debugf is equivalent to Printf with "DEBUG: SERVICENAME: " prepended.
+func (sl *ServiceLogger) Debugf(format string, v ...interface{}) {
+	sl.Debug.Printf(format, v...)
+}
+
+// Infof is equivalent to Printf with "INFO: SERVICENAME: " prepended.
+func (sl *ServiceLogger) Infof(format string, v ...interface{}) {
+	sl.Info.Printf(format, v...)
+}
+
+// Errorf is equivalent to Printf with "ERROR: SERVICENAME: " prepended.
+func (sl *ServiceLogger) Errorf(format string, v ...interface{}) {
+	sl.Error.Printf(format, v...)
+}
+
+// Criticalf is equivalent to Printf with "CRITICAL: SERVICENAME: " prepended.
+func (sl *ServiceLogger) Criticalf(format string, v ...interface{}) {
+	sl.Critical.Printf(format, v...)
+}
+
 // NewServiceLogger returns a logger with designated logging levels for a particular service.
 func NewServiceLogger(serviceName string, level int) ServiceLogger {
 	logger := ServiceLogger{
