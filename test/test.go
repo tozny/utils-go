@@ -93,7 +93,8 @@ func MakeE3DBAccount(t *testing.T, accounter *accountClient.E3dbAccountClient, a
 	}
 	// Create an account and client for that account using the specified params
 	ctx := context.TODO()
-	accountResponse, err = accounter.CreateAccount(ctx, createAccountParams)
+	accountResponse, internalError := accounter.CreateAccount(ctx, createAccountParams)
+	err = e3dbClients.FlatMapInternalError(*internalError)
 	if err != nil {
 		t.Errorf("Error %s creating account with params %+v\n", err, createAccountParams)
 		return accountClientConfig, accountResponse, err
