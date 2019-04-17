@@ -1,11 +1,10 @@
 package database
 
 import (
-	"fmt"
 	"github.com/go-pg/pg"
 	"github.com/robinjoseph08/go-pg-migrations"
 	"log"
-	"os"
+	"time"
 )
 
 var (
@@ -15,19 +14,22 @@ var (
 
 // DBConfig wraps config for connecting to a database.
 type DBConfig struct {
-	Address  string
-	User     string
-	Database string
-	Password string
+	Address       string
+	User          string
+	Database      string
+	Password      string
+	EnableLogging bool
 }
 
 // DB wraps a client for a database.
 type DB struct {
 	Client *pg.DB
+	Logger *log.Logger
 }
 
 // Close closes a connection to a database. Once close has been called calling other methods on db will error.
 func (db *DB) Close() {
+	db.Logger.Println("Closing database connection")
 	db.Client.Close()
 }
 
@@ -59,16 +61,32 @@ func (d dbLogger) AfterQuery(q *pg.QueryEvent) {
 
 // New returns a new DB object which wraps
 // a connection to the database specified in config
-func New(config DBConfig) DB {
+func New(config DBConfig, logger *log.Logger) DB {
 	db := pg.Connect(&pg.Options{
 		Addr:     config.Address,
 		User:     config.User,
 		Database: config.Database,
 		Password: config.Password,
 	})
-	if os.Getenv("QUERY_DEBUG") == "ON" {
-		db.AddQueryHook(dbLogger{logger: log.New(os.Stdout, fmt.Sprintf("%s: %s: ", config.Address, config.Database), log.LstdFlags)})
+	if config.EnableLogging {
+		db.AddQueryHook(dbLogger{logger: logger})
 	}
-	dbWrap := DB{Client: db}
-	return dbWrap
+	return DB{
+		Client: db,
+		Logger: logger,
+	}
+}
+
+// Initialize starts up the database and returns the Close function used to gracefully shut it down.
+func (db *DB) Initialize() func() {
+	for {
+		err := db.Migrate()
+		if err != nil {
+			db.Logger.Println(err)
+			time.Sleep(1 * time.Second)
+			continue
+		}
+		break
+	}
+	return db.Close
 }

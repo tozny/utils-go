@@ -1,6 +1,7 @@
 package utils
 
 import (
+	"io"
 	"io/ioutil"
 	"log"
 	"os"
@@ -71,4 +72,19 @@ func NewServiceLogger(serviceName string, level int) ServiceLogger {
 		logger.SetOutput(ioutil.Discard)
 	}
 	return logger
+}
+
+// GetLogger initializes a logging object writing to the requested log file.
+func GetLogger(logFile string, serviceName string) *log.Logger {
+	var output io.Writer
+	switch logFile {
+	case "stdout":
+		output = os.Stdout
+	case "/dev/null":
+		output = ioutil.Discard
+	default:
+		// TODO: make file case work, writing output to the specified location...
+		output = os.Stdout
+	}
+	return log.New(output, serviceName+": ", log.LstdFlags|log.Lshortfile|log.Lmicroseconds)
 }
