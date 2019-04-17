@@ -78,7 +78,7 @@ func New(config DBConfig, logger *log.Logger) DB {
 }
 
 // Initialize starts up the database and returns the Close function used to gracefully shut it down.
-func (db *DB) Initialize() func() {
+func (db *DB) Initialize() {
 	for {
 		err := db.Migrate()
 		if err != nil {
@@ -88,5 +88,4 @@ func (db *DB) Initialize() func() {
 		}
 		break
 	}
-	return db.Close
 }
