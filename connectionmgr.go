@@ -45,17 +45,17 @@ func NewConnectionManager(logger *log.Logger) ConnectionManager {
 		}
 
 		for _, c := range closers {
-			go func() {
+			go func(c func()) {
 				c()
 				stopwg.Done()
-			}()
-			stopwg.Wait()
+			}(c)
 		}
 	}()
 	return ConnectionManager{
 		closerChan: closerChan,
 		Close: func() {
 			shutdown <- struct{}{}
+			stopwg.Wait()
 		},
 	}
 }
