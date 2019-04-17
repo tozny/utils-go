@@ -11,6 +11,7 @@ import (
 	"github.com/tozny/e3db-clients-go"
 	"github.com/tozny/e3db-clients-go/accountClient"
 	"github.com/tozny/e3db-go/v2"
+	"io/ioutil"
 	"net/http"
 	"testing"
 )
@@ -102,4 +103,32 @@ func MakeE3DBAccount(t *testing.T, accounter *accountClient.E3dbAccountClient, a
 	accountClientConfig.APIKey = accountResponse.Account.Client.APIKeyID
 	accountClientConfig.APISecret = accountResponse.Account.Client.APISecretKey
 	return accountClientConfig, accountResponse, err
+}
+
+// AssertRespStatus asserts that the response status of r is a specific value.
+func AssertRespStatus(t *testing.T, context string, r *http.Response, code int) {
+	if r.StatusCode != code {
+		t.Fatalf("Unexpected response status: %d. Expected %d", r.StatusCode, code)
+	}
+}
+
+// BodyToObject decodes the body from a response to the provided object.
+func BodyToObject(t *testing.T, r *http.Response, obj interface{}) {
+	body, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		t.Fatal("Error reading body")
+	}
+	err = json.Unmarshal(body, obj)
+	if err != nil {
+		t.Fatalf("Unable to decode response %s to object %T", string(body), obj)
+	}
+}
+
+// BodyToString decodes the body from a response to a string and returns it.
+func BodyToString(t *testing.T, r *http.Response) string {
+	body, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		t.Fatal("Error reading body")
+	}
+	return string(body)
 }
