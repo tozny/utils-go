@@ -29,6 +29,7 @@ type ConnectionManager struct {
 func NewConnectionManager(logger *log.Logger) ConnectionManager {
 	closerChan := make(chan CloseFunc)
 	shutdown := make(chan struct{})
+	var stopwg sync.WaitGroup
 	go func() {
 		closers := []CloseFunc{}
 	loop:
@@ -38,12 +39,17 @@ func NewConnectionManager(logger *log.Logger) ConnectionManager {
 				logger.Println("Shutting Down")
 				break loop
 			case c := <-closerChan:
-				// defer c()
+				stopwg.Add(1)
 				closers = append(closers, c)
 			}
 		}
+
 		for _, c := range closers {
-			c()
+			go func() {
+				c()
+				stopwg.Done()
+			}()
+			stopwg.Wait()
 		}
 	}()
 	return ConnectionManager{
