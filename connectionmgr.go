@@ -30,7 +30,7 @@ func NewConnectionManager(logger *log.Logger) ConnectionManager {
 	closerChan := make(chan CloseFunc)
 	shutdown := make(chan struct{})
 	go func() {
-		// closers := []CloseFunc{}
+		closers := []CloseFunc{}
 	loop:
 		for {
 			select {
@@ -38,13 +38,13 @@ func NewConnectionManager(logger *log.Logger) ConnectionManager {
 				logger.Println("Shutting Down")
 				break loop
 			case c := <-closerChan:
-				defer c()
-				// closers = append(closers, c)
+				// defer c()
+				closers = append(closers, c)
 			}
 		}
-		// for _, c := range closers {
-		// 	c()
-		// }
+		for _, c := range closers {
+			c()
+		}
 	}()
 	return ConnectionManager{
 		closerChan: closerChan,
