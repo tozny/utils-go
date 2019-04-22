@@ -14,10 +14,10 @@ type Initializer interface {
 // CloseFunc is a function that gracefully shuts down a connection as a side effect.
 type CloseFunc func()
 
-// ConnectionManager manages initialization and shutdown of log lived connections.
+// ConnectionManager manages initialization and shutdown of long lived connections.
 // Each connection object must match the Initializer interface. Initialization happens
 // in parallel. The waitgroup can be used to wait util all connections are initialized.
-// Close is a method allowing the proper shutdown of all connections.
+// Close kick off the proper shutdown of all managed connections.
 type ConnectionManager struct {
 	closerChan chan CloseFunc
 	Close      CloseFunc
