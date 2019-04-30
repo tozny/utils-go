@@ -6,15 +6,6 @@ import (
 	"os"
 )
 
-const (
-	OFF      = iota // 0
-	SERVICE  = iota
-	CRITICAL = iota
-	ERROR    = iota
-	INFO     = iota
-	DEBUG    = iota // 5
-)
-
 // ServiceLogger represents a logger with logging level prefixes for a specific service.
 type ServiceLogger struct {
 	ServiceName string
@@ -46,7 +37,19 @@ func (sl *ServiceLogger) Criticalf(format string, v ...interface{}) {
 }
 
 // NewServiceLogger returns a logger with designated logging levels for a particular service.
-func NewServiceLogger(serviceName string, level int) ServiceLogger {
+func NewServiceLogger(serviceName string, level string) ServiceLogger {
+	levelMap := map[string]int{
+		"OFF":      0,
+		"SERVICE":  1,
+		"CRITICAL": 2,
+		"ERROR":    3,
+		"INFO":     4,
+		"DEBUG":    5,
+	}
+	levelInt, exists := levelMap[level]
+	if !exists {
+		levelInt = 3 // default to ERROR and below
+	}
 	logger := ServiceLogger{
 		serviceName,
 		log.New(os.Stdout, serviceName+": ", log.LstdFlags|log.Lshortfile|log.Lmicroseconds),
@@ -55,19 +58,19 @@ func NewServiceLogger(serviceName string, level int) ServiceLogger {
 		log.New(os.Stdout, "INFO: "+serviceName+": ", log.LstdFlags|log.Lshortfile|log.Lmicroseconds),
 		log.New(os.Stdout, "DEBUG: "+serviceName+": ", log.LstdFlags|log.Lshortfile|log.Lmicroseconds),
 	}
-	if level < DEBUG {
+	if levelInt < 5 {
 		logger.Debug.SetOutput(ioutil.Discard)
 	}
-	if level < INFO {
+	if levelInt < 4 {
 		logger.Info.SetOutput(ioutil.Discard)
 	}
-	if level < ERROR {
+	if levelInt < 3 {
 		logger.Error.SetOutput(ioutil.Discard)
 	}
-	if level < CRITICAL {
+	if levelInt < 2 {
 		logger.Critical.SetOutput(ioutil.Discard)
 	}
-	if level < SERVICE {
+	if levelInt < 1 {
 		logger.SetOutput(ioutil.Discard)
 	}
 	return logger
