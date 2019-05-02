@@ -43,99 +43,110 @@ var (
 // next handler in the chain by calling the ServeHTTP method on the handler. If
 // the middleware should pass additional information along with the request,
 // context is available on the request object. Add a value to the context.
-type Middleware func(handler http.Handler) http.Handler
+type Middleware func(http.Handler) http.Handler
 
-// ApplyMiddleware returns the final handler wrapped in all passed middleware handlers.
-func ApplyMiddleware(final http.Handler, handlers ...Middleware) http.Handler {
-	for _, handler := range handlers {
-		final = handler(final)
+// MiddlewareFunc is an adapter to allow the use of ordinary functions as
+// Middleware. If f is a function with the appropriate signature MiddlewareFunc(f)
+// is a Middleware that calls f.
+func MiddlewareFunc(f func(http.Handler, http.ResponseWriter, *http.Request) http.Handler) func(http.Handler) http.Handler {
+	return func(h http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			f(h, w, r)
+		}
 	}
-	return final
+}
+
+// ApplyMiddleware decorates an http.Handler with all passed middleware.
+func ApplyMiddleware(handler http.Handler, middleware ...Middleware) http.Handler {
+	for _, decorator := range middleware {
+		handler = decorator(handler)
+	}
+	return handler
+}
+
+// DecoratedHandlerFunc adapts ordinary http handler functions to http handlers
+// decorated with middleware.
+func DecoratedHandlerFunc(f func(http.ResponseWriter, *http.Request), middleware ...Middleware) http.Handler {
+	return ApplyMiddleware(http.HandlerFunc(f), middleware...)
 }
 
 // JSONLoggingMiddleware wraps an HTTP handler and logs
 // the request and de-serialized JSON body.
 func JSONLoggingMiddleware(logger *log.Logger) Middleware {
-	return func(h http.Handler) http.Handler {
-		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			var requestBody interface{}
-			json.NewDecoder(r.Body).Decode(&requestBody)
-			logger.Print(map[string]interface{}{
-				"request_method":    r.Method,
-				"request_uri":       r.RequestURI,
-				"requester_address": r.RemoteAddr,
-				"requester_host":    r.Host,
-				"request_body":      requestBody,
-			})
-			// Repopulate body with the data read
-			jsonBytes := new(bytes.Buffer)
-			json.NewEncoder(jsonBytes).Encode(requestBody)
-			r.Body = ioutil.NopCloser(jsonBytes)
-			h.ServeHTTP(w, r)
+	return MiddlewareFunc(func(h http.Handler, w http.ResponseWriter, r *http.Request) http.Handler {
+		var requestBody interface{}
+		json.NewDecoder(r.Body).Decode(&requestBody)
+		logger.Print(map[string]interface{}{
+			"request_method":    r.Method,
+			"request_uri":       r.RequestURI,
+			"requester_address": r.RemoteAddr,
+			"requester_host":    r.Host,
+			"request_body":      requestBody,
 		})
-	}
+		// Repopulate body with the data read
+		jsonBytes := new(bytes.Buffer)
+		json.NewEncoder(jsonBytes).Encode(requestBody)
+		r.Body = ioutil.NopCloser(jsonBytes)
+		h.ServeHTTP(w, r)
+	})
 }
 
 // CORSMiddleware provides http middleware for allowing cross origin requests by
 // decorating the request with the provided CORS headers and returning default 200 OK for any options requests
 func CORSMiddleware(corsHeaders []http.Header) Middleware {
-	return func(h http.Handler) http.Handler {
-		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			for _, corsHeader := range corsHeaders {
-				for key, values := range corsHeader {
-					for _, value := range values {
-						w.Header().Set(key, value)
-					}
+	return MiddlewareFunc(func(h http.Handler, w http.ResponseWriter, r *http.Request) http.Handler {
+		for _, corsHeader := range corsHeaders {
+			for key, values := range corsHeader {
+				for _, value := range values {
+					w.Header().Set(key, value)
 				}
 			}
-			switch r.Method {
-			case http.MethodOptions:
-				HandleOptionsRequest(w)
-				return
-			}
-			h.ServeHTTP(w, r)
-		})
-	}
+		}
+		switch r.Method {
+		case http.MethodOptions:
+			HandleOptionsRequest(w)
+			return
+		}
+		h.ServeHTTP(w, r)
+	})
 }
 
 // AuthMiddleware provides http middleware for enforcing requests as coming from e3db
 // authenticated entities (either external or internal clients) for any request with a path
 // not ending in `HealthCheckPathSuffix` or `ServiceCheckPathSuffix`
 func AuthMiddleware(auth authClient.E3dbAuthClient, privateService bool, logger *log.Logger) Middleware {
-	return func(h http.Handler) http.Handler {
-		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			// Check to see if this request is a health or service check requests
-			requestPath := r.URL.Path
-			isMonitoringRequest := strings.HasSuffix(requestPath, HealthCheckPathSuffix) || strings.HasSuffix(requestPath, ServiceCheckPathSuffix)
-			if isMonitoringRequest {
-				// NoOp authentication, continue processing request
-				h.ServeHTTP(w, r)
-				return
-			}
-			token, err := ExtractBearerToken(r)
-			if err != nil {
-				logger.Printf("E3dbAuthHandler: error extracting bearer token %s\n", err)
-				HandleError(w, http.StatusUnauthorized, err)
-				return
-			}
-			ctx := context.Background()
-			validateParams := authClient.ValidateTokenRequest{
-				Token:    token,
-				Internal: privateService,
-			}
-			validateTokenResponse, err := auth.ValidateToken(ctx, validateParams)
-			if err != nil || !validateTokenResponse.Valid {
-				logger.Printf("E3dbAuthHandler: error validating token %s %+v\n", err, validateTokenResponse)
-				HandleError(w, http.StatusUnauthorized, ErrorInvalidAuthToken)
-				return
-			}
-			// Add the clients id and token to the request headers
-			r.Header.Set(ToznyClientIDHeader, validateTokenResponse.ClientId)
-			r.Header.Set(ToznyOpenAuthenticationTokenHeader, token)
-			// Authenticated, continue processing request
+	return MiddlewareFunc(func(h http.Handler, w http.ResponseWriter, r *http.Request) http.Handler {
+		// Check to see if this request is a health or service check requests
+		requestPath := r.URL.Path
+		isMonitoringRequest := strings.HasSuffix(requestPath, HealthCheckPathSuffix) || strings.HasSuffix(requestPath, ServiceCheckPathSuffix)
+		if isMonitoringRequest {
+			// NoOp authentication, continue processing request
 			h.ServeHTTP(w, r)
-		})
-	}
+			return
+		}
+		token, err := ExtractBearerToken(r)
+		if err != nil {
+			logger.Printf("E3dbAuthHandler: error extracting bearer token %s\n", err)
+			HandleError(w, http.StatusUnauthorized, err)
+			return
+		}
+		ctx := context.Background()
+		validateParams := authClient.ValidateTokenRequest{
+			Token:    token,
+			Internal: privateService,
+		}
+		validateTokenResponse, err := auth.ValidateToken(ctx, validateParams)
+		if err != nil || !validateTokenResponse.Valid {
+			logger.Printf("E3dbAuthHandler: error validating token %s %+v\n", err, validateTokenResponse)
+			HandleError(w, http.StatusUnauthorized, ErrorInvalidAuthToken)
+			return
+		}
+		// Add the clients id and token to the request headers
+		r.Header.Set(ToznyClientIDHeader, validateTokenResponse.ClientId)
+		r.Header.Set(ToznyOpenAuthenticationTokenHeader, token)
+		// Authenticated, continue processing request
+		h.ServeHTTP(w, r)
+	})
 }
 
 // TrimSlash is middleware to trim trailing slashes from request paths for usability. Without this
