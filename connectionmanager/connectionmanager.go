@@ -48,9 +48,9 @@ type ConnectionManager struct {
 	WG         sync.WaitGroup
 }
 
-// NewConnectionManager initializes a new ConnectionManager object that can be used
+// New initializes a new ConnectionManager object that can be used
 // to manage the life of long lived remote connections such as to a database.
-func NewConnectionManager(logger *log.Logger) ConnectionManager {
+func New(logger *log.Logger) ConnectionManager {
 	closerChan := make(chan CloseFunc)
 	shutdown := make(chan struct{})
 	var stopwg sync.WaitGroup
