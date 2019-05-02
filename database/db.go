@@ -1,10 +1,11 @@
 package database
 
 import (
-	"github.com/go-pg/pg"
-	"github.com/robinjoseph08/go-pg-migrations"
 	"log"
 	"time"
+
+	"github.com/go-pg/pg"
+	migrations "github.com/robinjoseph08/go-pg-migrations"
 )
 
 var (
@@ -23,8 +24,9 @@ type DBConfig struct {
 
 // DB wraps a client for a database.
 type DB struct {
-	Client *pg.DB
-	Logger *log.Logger
+	Client      *pg.DB
+	Logger      *log.Logger
+	initializer func(*DB)
 }
 
 // Close closes a connection to a database. Once close has been called calling other methods on db will error.
@@ -59,8 +61,7 @@ func (d dbLogger) AfterQuery(q *pg.QueryEvent) {
 	d.logger.Printf("executed query\n%+v ", query)
 }
 
-// New returns a new DB object which wraps
-// a connection to the database specified in config
+// New returns a new DB object which wraps a connection to the database specified in config
 func New(config DBConfig, logger *log.Logger) DB {
 	db := pg.Connect(&pg.Options{
 		Addr:     config.Address,
@@ -72,13 +73,26 @@ func New(config DBConfig, logger *log.Logger) DB {
 		db.AddQueryHook(dbLogger{logger: logger})
 	}
 	return DB{
-		Client: db,
-		Logger: logger,
+		Client:      db,
+		Logger:      logger,
+		initializer: RunMigrations,
 	}
 }
 
-// Initialize starts up the database and returns the Close function used to gracefully shut it down.
+// Initialize runs any needed set up operations for the database. This defaults
+// to RunMigrations, but can be set using the Initializer method.
 func (db *DB) Initialize() {
+	db.initializer(db)
+}
+
+// Initializer changes the initialization function run when the Initialize method is called.
+func (db *DB) Initializer(initializer func(*DB)) {
+	db.initializer = initializer
+}
+
+// RunMigrations is an initialization function for a DB which attempts to run migrations
+// once a second in a loop until they run successfully.
+func RunMigrations(db *DB) {
 	for {
 		err := db.Migrate()
 		if err != nil {

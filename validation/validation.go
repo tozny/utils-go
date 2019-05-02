@@ -1,4 +1,4 @@
-package utils
+package validation
 
 import (
 	"encoding/base64"
