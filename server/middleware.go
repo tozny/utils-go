@@ -48,11 +48,11 @@ type Middleware func(http.Handler) http.Handler
 // MiddlewareFunc is an adapter to allow the use of ordinary functions as
 // Middleware. If f is a function with the appropriate signature MiddlewareFunc(f)
 // is a Middleware that calls f.
-func MiddlewareFunc(f func(http.Handler, http.ResponseWriter, *http.Request) http.Handler) func(http.Handler) http.Handler {
+func MiddlewareFunc(f func(http.Handler, http.ResponseWriter, *http.Request)) Middleware {
 	return func(h http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			f(h, w, r)
-		}
+		})
 	}
 }
 
@@ -73,7 +73,7 @@ func DecoratedHandlerFunc(f func(http.ResponseWriter, *http.Request), middleware
 // JSONLoggingMiddleware wraps an HTTP handler and logs
 // the request and de-serialized JSON body.
 func JSONLoggingMiddleware(logger *log.Logger) Middleware {
-	return MiddlewareFunc(func(h http.Handler, w http.ResponseWriter, r *http.Request) http.Handler {
+	return MiddlewareFunc(func(h http.Handler, w http.ResponseWriter, r *http.Request) {
 		var requestBody interface{}
 		json.NewDecoder(r.Body).Decode(&requestBody)
 		logger.Print(map[string]interface{}{
@@ -94,7 +94,7 @@ func JSONLoggingMiddleware(logger *log.Logger) Middleware {
 // CORSMiddleware provides http middleware for allowing cross origin requests by
 // decorating the request with the provided CORS headers and returning default 200 OK for any options requests
 func CORSMiddleware(corsHeaders []http.Header) Middleware {
-	return MiddlewareFunc(func(h http.Handler, w http.ResponseWriter, r *http.Request) http.Handler {
+	return MiddlewareFunc(func(h http.Handler, w http.ResponseWriter, r *http.Request) {
 		for _, corsHeader := range corsHeaders {
 			for key, values := range corsHeader {
 				for _, value := range values {
@@ -115,7 +115,7 @@ func CORSMiddleware(corsHeaders []http.Header) Middleware {
 // authenticated entities (either external or internal clients) for any request with a path
 // not ending in `HealthCheckPathSuffix` or `ServiceCheckPathSuffix`
 func AuthMiddleware(auth authClient.E3dbAuthClient, privateService bool, logger *log.Logger) Middleware {
-	return MiddlewareFunc(func(h http.Handler, w http.ResponseWriter, r *http.Request) http.Handler {
+	return MiddlewareFunc(func(h http.Handler, w http.ResponseWriter, r *http.Request) {
 		// Check to see if this request is a health or service check requests
 		requestPath := r.URL.Path
 		isMonitoringRequest := strings.HasSuffix(requestPath, HealthCheckPathSuffix) || strings.HasSuffix(requestPath, ServiceCheckPathSuffix)
