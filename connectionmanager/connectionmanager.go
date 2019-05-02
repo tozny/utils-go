@@ -15,7 +15,7 @@ type Closer interface {
 	Close()
 }
 
-// InitializerCloser is the interface the both initializes and gracefully closes a
+// InitializerCloser is the interface that both initializes and gracefully closes a
 // connection of some kind.
 type InitializerCloser interface {
 	Initializer
@@ -41,7 +41,7 @@ type CloseFunc func()
 //
 // Closers are queued up internally running only when the ConnectionManager's Close method
 // is called. The ConnectionManager runs each Close method in a separate go routine and blocks
-// blocks until all are complete.
+// until all are complete.
 type ConnectionManager struct {
 	closerChan chan CloseFunc
 	Close      CloseFunc
@@ -110,6 +110,11 @@ func (cm *ConnectionManager) ManageClose(closers ...Closer) {
 
 // ManageConnection accepts any number of items matching the InitializerCloser
 // interface and manages both an item's initialization and close.
+//
+// The close method of the managed item is queued first to ensure it is present
+// before running the items initialization which happens immediately when calling
+// the ManageInitialization method. Without this order, close may not get managed
+// if something interupts before initialization is complete.
 func (cm *ConnectionManager) ManageConnection(initializerClosers ...InitializerCloser) {
 	for _, ic := range initializerClosers {
 		cm.ManageClose(ic)
