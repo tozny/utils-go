@@ -22,6 +22,16 @@ var levelMap = map[string]int{
 	"DEBUG":    5,
 }
 
+// NewServiceLogger returns a logger with designated logging levels for a particular service.
+func NewServiceLogger(out io.Writer, serviceName string, level string) ServiceLogger {
+	logger := ServiceLogger{
+		serviceName: serviceName,
+		Logger:      log.New(out, "", log.LstdFlags|log.Lshortfile|log.Lmicroseconds),
+	}
+	logger.SetLevel(level)
+	return logger
+}
+
 // SetLevel allows the log level of the ServiceLogger to be updated based on
 // supported log level strings. These include in order:
 // 	- "OFF"
@@ -126,16 +136,6 @@ func (sl *ServiceLogger) Println(v ...interface{}) {
 // Printf with "SERVICENAME: " prepended. Only output when log level is SERVICE or higher.
 func (sl *ServiceLogger) Printf(format string, v ...interface{}) {
 	sl.doPrintf("SERVICE", format, v...)
-}
-
-// NewServiceLogger returns a logger with designated logging levels for a particular service.
-func NewServiceLogger(out io.Writer, serviceName string, level string) ServiceLogger {
-	logger := ServiceLogger{
-		serviceName: serviceName,
-		Logger:      log.New(out, "", log.LstdFlags|log.Lshortfile|log.Lmicroseconds),
-	}
-	logger.SetLevel(level)
-	return logger
 }
 
 // prefixString returns "LEVEL: SERVICENAME: " unless the level is at or below

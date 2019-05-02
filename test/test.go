@@ -8,12 +8,13 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
-	"github.com/tozny/e3db-clients-go"
-	"github.com/tozny/e3db-clients-go/accountClient"
-	"github.com/tozny/e3db-go/v2"
 	"io/ioutil"
 	"net/http"
 	"testing"
+
+	e3dbClients "github.com/tozny/e3db-clients-go"
+	"github.com/tozny/e3db-clients-go/accountClient"
+	"github.com/tozny/e3db-go/v2"
 )
 
 // MakeHttpRequest attempts to make the provided http request and JSON deserialize the response using the provided result interface , returning the raw http response and error (if any).
@@ -108,7 +109,7 @@ func MakeE3DBAccount(t *testing.T, accounter *accountClient.E3dbAccountClient, a
 // AssertRespStatus asserts that the response status of r is a specific value.
 func AssertRespStatus(t *testing.T, context string, r *http.Response, code int) {
 	if r.StatusCode != code {
-		t.Fatalf("Unexpected response status: %d. Expected %d", r.StatusCode, code)
+		t.Fatalf("%s: Unexpected response status: %d. Expected %d", context, r.StatusCode, code)
 	}
 }
 
