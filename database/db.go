@@ -19,6 +19,7 @@ type DBConfig struct {
 	User          string
 	Database      string
 	Password      string
+	Logger        *log.Logger
 	EnableLogging bool
 }
 
@@ -62,7 +63,7 @@ func (d dbLogger) AfterQuery(q *pg.QueryEvent) {
 }
 
 // New returns a new DB object which wraps a connection to the database specified in config
-func New(config DBConfig, logger *log.Logger) DB {
+func New(config DBConfig) DB {
 	db := pg.Connect(&pg.Options{
 		Addr:     config.Address,
 		User:     config.User,
@@ -70,11 +71,11 @@ func New(config DBConfig, logger *log.Logger) DB {
 		Password: config.Password,
 	})
 	if config.EnableLogging {
-		db.AddQueryHook(dbLogger{logger: logger})
+		db.AddQueryHook(dbLogger{logger: config.Logger})
 	}
 	return DB{
 		Client:      db,
-		Logger:      logger,
+		Logger:      config.Logger,
 		initializer: RunMigrations,
 	}
 }

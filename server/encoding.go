@@ -6,8 +6,8 @@ import (
 	"net/http"
 )
 
-// ReqToObject un-marshals a request object body JSON into an object
-func ReqToObject(r *http.Request, obj interface{}) error {
+// UnmarshalJSONRequest un-marshals a request object body JSON into the passed interface
+func UnmarshalJSONRequest(r *http.Request, obj interface{}) error {
 	body, err := ioutil.ReadAll(r.Body)
 	if err != nil {
 		return err
@@ -18,9 +18,9 @@ func ReqToObject(r *http.Request, obj interface{}) error {
 	return nil
 }
 
-// WriteObjectResponse marshals an object into the response body and sets
+// MarshalJSONResponse marshals an interface into the response body and sets
 // JSON content type headers
-func WriteObjectResponse(obj interface{}, w http.ResponseWriter) error {
+func MarshalJSONResponse(obj interface{}, w http.ResponseWriter) error {
 	w.Header().Set("Content-Type", "application/json")
 	if err := json.NewEncoder(w).Encode(obj); err != nil {
 		return err
