@@ -13,3 +13,11 @@ func MustGetenv(env string) string {
 	}
 	return value
 }
+
+// EnvOrDefault fetches an environment variable value, or if not set returns the fallback value
+func EnvOrDefault(key string, fallback string) string {
+	if val, ok := os.LookupEnv(key); ok {
+		return val
+	}
+	return fallback
+}

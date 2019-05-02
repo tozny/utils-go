@@ -1,11 +1,11 @@
 package database
 
 import (
-	"fmt"
-	"github.com/go-pg/pg"
-	"github.com/robinjoseph08/go-pg-migrations"
 	"log"
-	"os"
+	"time"
+
+	"github.com/go-pg/pg"
+	migrations "github.com/robinjoseph08/go-pg-migrations"
 )
 
 var (
@@ -15,19 +15,24 @@ var (
 
 // DBConfig wraps config for connecting to a database.
 type DBConfig struct {
-	Address  string
-	User     string
-	Database string
-	Password string
+	Address       string
+	User          string
+	Database      string
+	Password      string
+	Logger        *log.Logger
+	EnableLogging bool
 }
 
 // DB wraps a client for a database.
 type DB struct {
-	Client *pg.DB
+	Client      *pg.DB
+	Logger      *log.Logger
+	initializer func(*DB)
 }
 
 // Close closes a connection to a database. Once close has been called calling other methods on db will error.
 func (db *DB) Close() {
+	db.Logger.Println("Closing database connection")
 	db.Client.Close()
 }
 
@@ -57,8 +62,7 @@ func (d dbLogger) AfterQuery(q *pg.QueryEvent) {
 	d.logger.Printf("executed query\n%+v ", query)
 }
 
-// New returns a new DB object which wraps
-// a connection to the database specified in config
+// New returns a new DB object which wraps a connection to the database specified in config
 func New(config DBConfig) DB {
 	db := pg.Connect(&pg.Options{
 		Addr:     config.Address,
@@ -66,9 +70,37 @@ func New(config DBConfig) DB {
 		Database: config.Database,
 		Password: config.Password,
 	})
-	if os.Getenv("QUERY_DEBUG") == "ON" {
-		db.AddQueryHook(dbLogger{logger: log.New(os.Stdout, fmt.Sprintf("%s: %s: ", config.Address, config.Database), log.LstdFlags)})
+	if config.EnableLogging {
+		db.AddQueryHook(dbLogger{logger: config.Logger})
 	}
-	dbWrap := DB{Client: db}
-	return dbWrap
+	return DB{
+		Client:      db,
+		Logger:      config.Logger,
+		initializer: RunMigrations,
+	}
+}
+
+// Initialize runs any needed set up operations for the database. This defaults
+// to RunMigrations, but can be set using the Initializer method.
+func (db *DB) Initialize() {
+	db.initializer(db)
+}
+
+// Initializer changes the initialization function run when the Initialize method is called.
+func (db *DB) Initializer(initializer func(*DB)) {
+	db.initializer = initializer
+}
+
+// RunMigrations is an initialization function for a DB which attempts to run migrations
+// once a second in a loop until they run successfully.
+func RunMigrations(db *DB) {
+	for {
+		err := db.Migrate()
+		if err != nil {
+			db.Logger.Println(err)
+			time.Sleep(1 * time.Second)
+			continue
+		}
+		break
+	}
 }

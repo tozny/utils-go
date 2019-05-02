@@ -1,35 +1,43 @@
 package server
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
-	"time"
+	"strings"
 )
 
-// Middleware is a function that decorates an http.Handler
-type Middleware func(handler http.Handler) http.Handler
+var (
+	// SupportedAuthTypes is a whitelist of supported authentication types. Deafult: Bearer
+	SupportedAuthTypes = [...]string{"Bearer"}
+	// ErrorInvalidAuthorizationHeader is a static error for invalid authorization
+	ErrorInvalidAuthorizationHeader = errors.New("InvalidAuthorizationHeader")
+	// ErrorUnsupportedAuthorizationType is a static error returned if the auth type is not in the whitelist
+	ErrorUnsupportedAuthorizationType = fmt.Errorf("UnsupportedAuthorizationType, supported types are %v", SupportedAuthTypes)
+	// ErrorInvalidAuthToken is a static error returned when authorization fails
+	ErrorInvalidAuthToken = errors.New("InvalidAuthToken")
+)
 
-// ApplyMiddleware creates a final http Handler with a slice of middleware functions applied
-func ApplyMiddleware(handlers []Middleware, final http.Handler) http.Handler {
-	for _, handler := range handlers {
-		final = handler(final)
+// ExtractBearerToken attempts to extract an Oauth bearer token
+// from the provided request, returning extracted token and error (if any)
+func ExtractBearerToken(r *http.Request) (string, error) {
+	var authToken string
+	authHeader := r.Header.Get("Authorization")
+	authParts := strings.Split(authHeader, " ")
+	if len(authParts) != 2 {
+		return authToken, ErrorInvalidAuthorizationHeader
 	}
-	return final
-}
-
-// ServeMux serves a set of endpoints defined in a ServerMux with the defined middleware applied
-func ServeMux(httpd *http.ServeMux, mw []Middleware, servicePort string) *http.Server {
-	// Create an http server with the provided config
-	server := &http.Server{
-		Addr: fmt.Sprintf(":%s", servicePort), //host:port for the server to listen on, defaults to localhost
-		// Log all requests made to this server
-		// Enable CORS support
-		// enforce valid external e3db client auth
-		Handler:      ApplyMiddleware(mw, httpd),
-		ReadTimeout:  10 * time.Second,
-		WriteTimeout: 10 * time.Second,
+	authType := authParts[0]
+	var invalidAuthType = true
+	for _, supportedType := range SupportedAuthTypes {
+		if authType == supportedType {
+			invalidAuthType = false
+			break
+		}
 	}
-
-	// Run http server until program is aborted or service errors.
-	panic(fmt.Errorf("Server error: %v", server.ListenAndServe()))
+	if invalidAuthType {
+		return authToken, ErrorUnsupportedAuthorizationType
+	}
+	authToken = authParts[1]
+	return authToken, nil
 }

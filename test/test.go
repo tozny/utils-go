@@ -8,11 +8,13 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
-	"github.com/tozny/e3db-clients-go"
-	"github.com/tozny/e3db-clients-go/accountClient"
-	"github.com/tozny/e3db-go/v2"
+	"io/ioutil"
 	"net/http"
 	"testing"
+
+	e3dbClients "github.com/tozny/e3db-clients-go"
+	"github.com/tozny/e3db-clients-go/accountClient"
+	"github.com/tozny/e3db-go/v2"
 )
 
 // MakeHttpRequest attempts to make the provided http request and JSON deserialize the response using the provided result interface , returning the raw http response and error (if any).
@@ -102,4 +104,32 @@ func MakeE3DBAccount(t *testing.T, accounter *accountClient.E3dbAccountClient, a
 	accountClientConfig.APIKey = accountResponse.Account.Client.APIKeyID
 	accountClientConfig.APISecret = accountResponse.Account.Client.APISecretKey
 	return accountClientConfig, accountResponse, err
+}
+
+// AssertRespStatus asserts that the response status of r is a specific value.
+func AssertRespStatus(t *testing.T, context string, r *http.Response, code int) {
+	if r.StatusCode != code {
+		t.Fatalf("%s: Unexpected response status: %d. Expected %d", context, r.StatusCode, code)
+	}
+}
+
+// UnmarshalJSONRequest decodes the body from a response to the provided object.
+func UnmarshalJSONRequest(t *testing.T, r *http.Response, obj interface{}) {
+	body, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		t.Fatal("Error reading body")
+	}
+	err = json.Unmarshal(body, obj)
+	if err != nil {
+		t.Fatalf("Unable to decode response %s to object %T", string(body), obj)
+	}
+}
+
+// DecodeResponseString decodes the body from a response to a string and returns it.
+func DecodeResponseString(t *testing.T, r *http.Response) string {
+	body, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		t.Fatal("Error reading body")
+	}
+	return string(body)
 }
