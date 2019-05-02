@@ -14,7 +14,7 @@ require (
 	github.com/pkg/errors v0.8.1 // indirect
 	github.com/robinjoseph08/go-pg-migrations v0.1.2
 	github.com/stretchr/testify v1.3.0 // indirect
-	github.com/tozny/e3db-clients-go v0.0.13-0.20190410033439-b0c0bef821c2
+	github.com/tozny/e3db-clients-go v0.0.18-0.20190502231832-3477741e5116
 	github.com/tozny/e3db-go/v2 v2.1.1
 	golang.org/x/sync v0.0.0-20190423024810-112230192c58 // indirect
 	gopkg.in/check.v1 v1.0.0-20180628173108-788fd7840127 // indirect

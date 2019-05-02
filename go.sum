@@ -111,6 +111,8 @@ github.com/tozny/e3db-clients-go v0.0.13 h1:Jv+W+/i1cffqjYCRJiTt8jpUle5XjMAVfO7B
 github.com/tozny/e3db-clients-go v0.0.13/go.mod h1:Ka7L0TxXVkglqsQT+acXUeact3g8LU2m4FZkomE+e4s=
 github.com/tozny/e3db-clients-go v0.0.17 h1:Uc8ItHM7C8mcra7T0Ek2qDNBUcdvlHxsDdO1p3eAx3g=
 github.com/tozny/e3db-clients-go v0.0.17/go.mod h1:RSPfEtICL/uHWO+ZyEfV2hpvmxQMcKTfUQQTf/MWEWA=
+github.com/tozny/e3db-clients-go v0.0.18-0.20190502231832-3477741e5116 h1:rSuuEDUbic+qncwQI3xRVzrF8H7N2AKOSdnF0j8D6jk=
+github.com/tozny/e3db-clients-go v0.0.18-0.20190502231832-3477741e5116/go.mod h1:3IhfF+eO1GvhN6ugx8BzqXVQIYpvFcYgL3I01mNSv7E=
 github.com/tozny/e3db-go/v2 v2.1.1 h1:esYqwmaxUpvIS0R7lcvifyfERSx/fSWs3fYu+5GQHR4=
 github.com/tozny/e3db-go/v2 v2.1.1/go.mod h1:fm4qLvM+lVyILrB+GEC/1pmwHXlzPFpY7+fB9RB6xio=
 github.com/tozny/utils-go v0.0.4/go.mod h1:eEO5khjSLcWQwTtwuu8ANsERmyh8szbukGSmgCAVjlU=
