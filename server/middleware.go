@@ -64,9 +64,9 @@ func ApplyMiddleware(handler http.Handler, middleware ...Middleware) http.Handle
 	return handler
 }
 
-// DecoratedHandlerFunc adapts ordinary http handler functions to http handlers
+// DecorateHandlerFunc adapts ordinary http handler functions to http handlers
 // decorated with middleware.
-func DecoratedHandlerFunc(f func(http.ResponseWriter, *http.Request), middleware ...Middleware) http.Handler {
+func DecorateHandlerFunc(f func(http.ResponseWriter, *http.Request), middleware ...Middleware) http.Handler {
 	return ApplyMiddleware(http.HandlerFunc(f), middleware...)
 }
 

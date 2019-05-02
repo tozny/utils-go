@@ -113,8 +113,8 @@ func AssertRespStatus(t *testing.T, context string, r *http.Response, code int) 
 	}
 }
 
-// BodyToObject decodes the body from a response to the provided object.
-func BodyToObject(t *testing.T, r *http.Response, obj interface{}) {
+// UnmarshalJSONRequest decodes the body from a response to the provided object.
+func UnmarshalJSONRequest(t *testing.T, r *http.Response, obj interface{}) {
 	body, err := ioutil.ReadAll(r.Body)
 	if err != nil {
 		t.Fatal("Error reading body")
@@ -125,8 +125,8 @@ func BodyToObject(t *testing.T, r *http.Response, obj interface{}) {
 	}
 }
 
-// BodyToString decodes the body from a response to a string and returns it.
-func BodyToString(t *testing.T, r *http.Response) string {
+// DecodeResponseString decodes the body from a response to a string and returns it.
+func DecodeResponseString(t *testing.T, r *http.Response) string {
 	body, err := ioutil.ReadAll(r.Body)
 	if err != nil {
 		t.Fatal("Error reading body")

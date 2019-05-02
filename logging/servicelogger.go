@@ -41,7 +41,7 @@ func NewServiceLogger(out io.Writer, serviceName string, level string) ServiceLo
 // 	- "INFO"
 // 	- "DEBUG"
 //
-// As the level goes from OFF to DEBUG, more details logs will output.
+// As the level goes from OFF to DEBUG, more detailed logs will output.
 func (sl *ServiceLogger) SetLevel(level string) {
 	levelInt, exists := levelMap[level]
 	if !exists {
