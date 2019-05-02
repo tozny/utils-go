@@ -10,6 +10,7 @@ import (
 	"strings"
 
 	"github.com/tozny/e3db-clients-go/authClient"
+	"github.com/tozny/utils-go/logging"
 )
 
 const (
@@ -72,7 +73,7 @@ func DecorateHandlerFunc(f func(http.ResponseWriter, *http.Request), middleware 
 
 // JSONLoggingMiddleware wraps an HTTP handler and logs
 // the request and de-serialized JSON body.
-func JSONLoggingMiddleware(logger *log.Logger) Middleware {
+func JSONLoggingMiddleware(logger *logging.ServiceLogger) Middleware {
 	return MiddlewareFunc(func(h http.Handler, w http.ResponseWriter, r *http.Request) {
 		var requestBody interface{}
 		json.NewDecoder(r.Body).Decode(&requestBody)

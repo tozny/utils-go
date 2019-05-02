@@ -1,8 +1,9 @@
 package connectionmanager
 
 import (
-	"log"
 	"sync"
+
+	"github.com/tozny/utils-go/logging"
 )
 
 // Initializer is the interface that initializes a connection of some kind.
@@ -50,7 +51,7 @@ type ConnectionManager struct {
 
 // New initializes a new ConnectionManager object that can be used
 // to manage the life of long lived remote connections such as to a database.
-func New(logger *log.Logger) ConnectionManager {
+func New(logger *logging.ServiceLogger) ConnectionManager {
 	closerChan := make(chan CloseFunc)
 	shutdown := make(chan struct{})
 	var stopwg sync.WaitGroup
@@ -112,7 +113,7 @@ func (cm *ConnectionManager) ManageClose(closers ...Closer) {
 // interface and manages both an item's initialization and close.
 //
 // The close method of the managed item is queued first to ensure it is present
-// before running the items initialization which happens immediately when calling
+// before running the item's initialization which happens immediately when calling
 // the ManageInitialization method. Without this order, close may not get managed
 // if something interupts before initialization is complete.
 func (cm *ConnectionManager) ManageConnection(initializerClosers ...InitializerCloser) {
