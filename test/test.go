@@ -46,9 +46,10 @@ func MakeHttpRequest(t *testing.T, method string, url string, body interface{}, 
 }
 
 // MakeE3DBAccount attempts to create a valid e3db account returning the root client config for the created account and error (if any).
-func MakeE3DBAccount(t *testing.T, accounter *accountClient.E3dbAccountClient, accountTag string) (e3dbClients.ClientConfig, *accountClient.CreateAccountResponse, error) {
+func MakeE3DBAccount(t *testing.T, accounter *accountClient.E3dbAccountClient, accountTag string, authNHost string) (e3dbClients.ClientConfig, *accountClient.CreateAccountResponse, error) {
 	var accountClientConfig = e3dbClients.ClientConfig{
-		Host: accounter.Host,
+		Host:      accounter.Host,
+		AuthNHost: authNHost,
 	}
 	var accountResponse *accountClient.CreateAccountResponse
 	// Generate info for creating a new account
