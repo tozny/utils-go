@@ -116,12 +116,15 @@ github.com/tozny/e3db-clients-go v0.0.18-0.20190502231832-3477741e5116 h1:rSuuED
 github.com/tozny/e3db-clients-go v0.0.18-0.20190502231832-3477741e5116/go.mod h1:3IhfF+eO1GvhN6ugx8BzqXVQIYpvFcYgL3I01mNSv7E=
 github.com/tozny/e3db-clients-go v0.0.19-0.20190507195351-473922bdcefc h1:2wPK9uApNALbzIEFB4CkvCGVCXAFOEzeNCrXV71r4as=
 github.com/tozny/e3db-clients-go v0.0.19-0.20190507195351-473922bdcefc/go.mod h1:Pn8q5elypmNENO9ARBulYeicvN2vuuOaupl+O+DXlp8=
+github.com/tozny/e3db-clients-go v0.0.19 h1:uNWM7xyUYu8K6c24JBnLRMJ5Uy9lVbn8BPMPvRu7pqg=
+github.com/tozny/e3db-clients-go v0.0.19/go.mod h1:4/0vmSE45SXY5Qh6X2RLCcuaFUQ4IVeoMl5wJXRNBfE=
 github.com/tozny/e3db-go/v2 v2.1.1 h1:esYqwmaxUpvIS0R7lcvifyfERSx/fSWs3fYu+5GQHR4=
 github.com/tozny/e3db-go/v2 v2.1.1/go.mod h1:fm4qLvM+lVyILrB+GEC/1pmwHXlzPFpY7+fB9RB6xio=
 github.com/tozny/utils-go v0.0.4/go.mod h1:eEO5khjSLcWQwTtwuu8ANsERmyh8szbukGSmgCAVjlU=
 github.com/tozny/utils-go v0.0.14/go.mod h1:Nx6QM/2+b9oiGP7qX3ldJIzmqoNMefUBSYrkc2U2FOo=
 github.com/tozny/utils-go v0.0.16/go.mod h1:UwOwWeTjNbxiYehfiiYwXruiL4Ul6ECNJhPdEyS71Dk=
 github.com/tozny/utils-go v0.0.19-0.20190503020711-3d77b038891b/go.mod h1:6XRmI9JSBEQdw+UzkakgJebm640chz395AbFNGIg334=
+github.com/tozny/utils-go v0.0.20-0.20190507195454-f814d6d479ed/go.mod h1:LTbZWaxdJfjTwsOciBOGg+r/JzWkwUqqxfwXIQgGKrg=
 go.opencensus.io v0.20.1/go.mod h1:6WKK9ahsWS3RSO+PY9ZHZUfv2irvY6gN279GOPZjmmk=
 golang.org/x/crypto v0.0.0-20180904163835-0709b304e793/go.mod h1:6SG95UA2DQfeDnfUPMdvaQW0Q7yPrPDi9nlGo2tz2b4=
 golang.org/x/crypto v0.0.0-20180910181607-0e37d006457b/go.mod h1:6SG95UA2DQfeDnfUPMdvaQW0Q7yPrPDi9nlGo2tz2b4=
