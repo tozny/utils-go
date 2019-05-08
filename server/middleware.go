@@ -9,7 +9,6 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/tozny/e3db-clients-go/authClient"
 	"github.com/tozny/utils-go/logging"
 )
 
@@ -112,10 +111,19 @@ func CORSMiddleware(corsHeaders []http.Header) Middleware {
 	})
 }
 
+// A E3DBTokenAuthenticator provides the ability to authenticate
+// an E3DB entity using an Oauth2 bearer token.
+type E3DBTokenAuthenticator interface {
+	// AuthenticateE3DBClient validates the provided token belongs to
+	// an internal OR external e3db client,
+	// returning the clientID and validity of the provided token, and error (if any).
+	AuthenticateE3DBClient(ctx context.Context, token string, internal bool) (clientID string, valid bool, err error)
+}
+
 // AuthMiddleware provides http middleware for enforcing requests as coming from e3db
 // authenticated entities (either external or internal clients) for any request with a path
 // not ending in `HealthCheckPathSuffix` or `ServiceCheckPathSuffix`
-func AuthMiddleware(auth authClient.E3dbAuthClient, privateService bool, logger *log.Logger) Middleware {
+func AuthMiddleware(auth E3DBTokenAuthenticator, privateService bool, logger *log.Logger) Middleware {
 	return MiddlewareFunc(func(h http.Handler, w http.ResponseWriter, r *http.Request) {
 		// Check to see if this request is a health or service check requests
 		requestPath := r.URL.Path
@@ -132,18 +140,14 @@ func AuthMiddleware(auth authClient.E3dbAuthClient, privateService bool, logger 
 			return
 		}
 		ctx := context.Background()
-		validateParams := authClient.ValidateTokenRequest{
-			Token:    token,
-			Internal: privateService,
-		}
-		validateTokenResponse, err := auth.ValidateToken(ctx, validateParams)
-		if err != nil || !validateTokenResponse.Valid {
-			logger.Printf("E3dbAuthHandler: error validating token %s %+v\n", err, validateTokenResponse)
+		clientID, valid, err := auth.AuthenticateE3DBClient(ctx, token, privateService)
+		if err != nil || !valid {
+			logger.Printf("E3dbAuthHandler: error validating token %s\n", err)
 			HandleError(w, http.StatusUnauthorized, ErrorInvalidAuthToken)
 			return
 		}
 		// Add the clients id and token to the request headers
-		r.Header.Set(ToznyClientIDHeader, validateTokenResponse.ClientId)
+		r.Header.Set(ToznyClientIDHeader, clientID)
 		r.Header.Set(ToznyOpenAuthenticationTokenHeader, token)
 		// Authenticated, continue processing request
 		h.ServeHTTP(w, r)
