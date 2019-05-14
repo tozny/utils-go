@@ -6,6 +6,28 @@ import (
 	"os"
 )
 
+// Logger is an interface defining object that providers logging methods that are
+// log level aware. This is especially useful when another interface supports
+// logging with logging levels. This interface can be embedded.
+type Logger interface {
+	SetLevel(string)
+	Print(...interface{})
+	Printf(string, ...interface{})
+	Println(...interface{})
+	Debug(...interface{})
+	Debugf(string, ...interface{})
+	Debugln(...interface{})
+	Info(...interface{})
+	Infof(string, ...interface{})
+	Infoln(...interface{})
+	Error(...interface{})
+	Errorf(string, ...interface{})
+	Errorln(...interface{})
+	Critical(...interface{})
+	Criticalf(string, ...interface{})
+	Criticalln(...interface{})
+}
+
 // LogWriter maps string values to io.Writer interfaces intended for logging output.
 //
 // This function is intended to provide a standard way of mapping environment-based
