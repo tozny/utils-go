@@ -3,6 +3,7 @@ package logging
 import (
 	"io"
 	"io/ioutil"
+	"log"
 	"os"
 )
 
@@ -10,6 +11,7 @@ import (
 // log level aware. This is especially useful when another interface supports
 // logging with logging levels. This interface can be embedded.
 type Logger interface {
+	Raw() *log.Logger
 	SetLevel(string)
 	Print(...interface{})
 	Printf(string, ...interface{})
