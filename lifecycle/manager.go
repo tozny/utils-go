@@ -26,32 +26,32 @@ type InitializerCloser interface {
 // CloseFunc is a function that gracefully shuts down a connection as a side effect.
 type CloseFunc func()
 
-// ConnectionManager allows multiple items needing initialization or shutdown to be
+// Manager allows multiple items needing initialization or shutdown to be
 // managed as a group.
 //
-// Initialization and Close of connections are managed independently of each other. Once
-// created the connection manager can accept any number of items supporting initialization,
-// close, or both. The ManageInitialization, ManageClose, and ManageConnection methods can
+// Initialization and Close of items are managed independently of each other. Once
+// created the manager can accept any number of items supporting initialization,
+// close, or both. The ManageInitialization, ManageClose, and ManageLifecycle methods can
 // be called as many times as needed in any order to add managed items. They are variadic
 // functions, so multiple items can be added in a single call.
 //
 // Initialization items will immediately start initialization in a separate go routine
-// once the item is added to the ConnectionManager. An internally managed sync.WaitGroup
-// is made available. Calling WG.Wait() on the ConnectionManager will block the current
+// once the item is added to the lifecycle.Manager. An internally managed sync.WaitGroup
+// is made available. Calling WG.Wait() on the lifecycle.Manager will block the current
 // go routine until all initialization functions are complete.
 //
-// Closers are queued up internally running only when the ConnectionManager's Close method
-// is called. The ConnectionManager runs each Close method in a separate go routine and blocks
+// Closers are queued up internally running only when the lifecycle.Manager's Close method
+// is called. The Manager runs each Close method in a separate go routine and blocks
 // until all are complete.
-type ConnectionManager struct {
+type Manager struct {
 	closerChan chan CloseFunc
 	Close      CloseFunc
 	WG         sync.WaitGroup
 }
 
-// New initializes a new ConnectionManager object that can be used
-// to manage the life of long lived remote connections such as to a database.
-func New(logger *logging.ServiceLogger) ConnectionManager {
+// New initializes a new lifecycle.Manager object that can be used
+// to manage the lifecycle of items such as connections to a database.
+func New(logger logging.Logger) Manager {
 	closerChan := make(chan CloseFunc)
 	shutdown := make(chan struct{})
 	var stopwg sync.WaitGroup
@@ -76,7 +76,7 @@ func New(logger *logging.ServiceLogger) ConnectionManager {
 			}(c)
 		}
 	}()
-	return ConnectionManager{
+	return Manager{
 		closerChan: closerChan,
 		Close: func() {
 			shutdown <- struct{}{}
@@ -85,40 +85,40 @@ func New(logger *logging.ServiceLogger) ConnectionManager {
 	}
 }
 
-// ManageInitialization allows the connection manager to accept any number of items
+// ManageInitialization allows the lifecycle manager to accept any number of items
 // matching the Initializer interface and initializes each in parallel. The wait
 // group is managed to allow callers to block until all managed initialization
 // methods are complete.
-func (cm *ConnectionManager) ManageInitialization(initializers ...Initializer) {
+func (m *Manager) ManageInitialization(initializers ...Initializer) {
 	for _, initializer := range initializers {
-		cm.WG.Add(1)
+		m.WG.Add(1)
 		go func(i Initializer) {
 			i.Initialize()
-			cm.WG.Done()
+			m.WG.Done()
 		}(initializer)
 	}
 }
 
-// ManageClose allow the connection manager to accept any number of items matching
+// ManageClose allows the lifecycle manager to accept any number of items matching
 // the Closer interface. It queues them up internally. When Close is called on
-// the connection manager, all queued Close methods are executed in parallel.
-// The close method blocks until managed Closers are complete.
-func (cm *ConnectionManager) ManageClose(closers ...Closer) {
+// the lifecycle manager, all queued Close methods are executed in parallel.
+// The close method block until all managed Closers are complete.
+func (m *Manager) ManageClose(closers ...Closer) {
 	for _, closer := range closers {
-		cm.closerChan <- closer.Close
+		m.closerChan <- closer.Close
 	}
 }
 
-// ManageConnection accepts any number of items matching the InitializerCloser
+// ManageLifecycle accepts any number of items matching the InitializerCloser
 // interface and manages both an item's initialization and close.
 //
 // The close method of the managed item is queued first to ensure it is present
 // before running the item's initialization which happens immediately when calling
 // the ManageInitialization method. Without this order, close may not get managed
 // if something interupts before initialization is complete.
-func (cm *ConnectionManager) ManageConnection(initializerClosers ...InitializerCloser) {
+func (m *Manager) ManageLifecycle(initializerClosers ...InitializerCloser) {
 	for _, ic := range initializerClosers {
-		cm.ManageClose(ic)
-		cm.ManageInitialization(ic)
+		m.ManageClose(ic)
+		m.ManageInitialization(ic)
 	}
 }
