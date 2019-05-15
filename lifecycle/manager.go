@@ -49,9 +49,9 @@ type Manager struct {
 	WG         sync.WaitGroup
 }
 
-// New initializes a new lifecycle.Manager object that can be used
+// NewManager initializes a new lifecycle.Manager object that can be used
 // to manage the lifecycle of items such as connections to a database.
-func New(logger logging.Logger) Manager {
+func NewManager(logger logging.Logger) Manager {
 	closerChan := make(chan CloseFunc)
 	shutdown := make(chan struct{})
 	var stopwg sync.WaitGroup
