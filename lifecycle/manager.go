@@ -45,7 +45,7 @@ type CloseFunc func()
 // until all are complete.
 type Manager struct {
 	closerChan chan CloseFunc
-	Close      CloseFunc
+	close      CloseFunc
 	WG         sync.WaitGroup
 }
 
@@ -78,7 +78,7 @@ func NewManager(logger logging.Logger) Manager {
 	}()
 	return Manager{
 		closerChan: closerChan,
-		Close: func() {
+		close: func() {
 			shutdown <- struct{}{}
 			stopwg.Wait()
 		},
@@ -121,4 +121,11 @@ func (m *Manager) ManageLifecycle(initializerClosers ...InitializerCloser) {
 		m.ManageClose(ic)
 		m.ManageInitialization(ic)
 	}
+}
+
+// Close runs the stored close function function, which will shut down all of
+// the items that have been queued for cleanup. Each item is cleaned up in
+// parallel. Close will block until all items have been successfully cleaned up.
+func (m *Manager) Close() {
+	m.close()
 }
