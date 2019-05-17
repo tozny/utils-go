@@ -32,6 +32,12 @@ func NewServiceLogger(out io.Writer, serviceName string, level string) ServiceLo
 	return logger
 }
 
+// Raw returns the underlying log.Logger for use in methods that do not support a full
+// logging.Logger with log levels.
+func (sl *ServiceLogger) Raw() *log.Logger {
+	return sl.Logger
+}
+
 // SetLevel allows the log level of the ServiceLogger to be updated based on
 // supported log level strings. These include in order:
 // 	- "OFF"
