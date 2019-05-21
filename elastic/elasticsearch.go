@@ -3,23 +3,25 @@ package elasticsearch
 import (
 	"context"
 	"fmt"
-	"log"
 	"net/url"
-	"os"
 
 	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/olivere/elastic"
 	aws "github.com/olivere/elastic/aws/v4"
+	"github.com/tozny/utils-go/logging"
 )
 
 // ElasticClient wraps a Client for Elasticsearch interactions. The struct also includes a logger, that will get configured, in instantiation methods.
 type ElasticClient struct {
 	*elastic.Client
-	*log.Logger
+	logging.Logger
 }
 
-// ElasticAWSConfig wraps necessary configuration for AWS Elasticsearch Client.
-type ElasticAWSConfig struct {
+// ElasticConfig wraps configuration to create either local or AWS Elasticsearch Client.
+type ElasticConfig struct {
+	UseLocal    bool
+	Debug       bool
+	Logger      logging.Logger
 	Region      string
 	URL         string
 	AccessKey   string
@@ -83,35 +85,44 @@ func (ec *ElasticClient) AddIndexMapping(ctx context.Context, indexName string, 
 	return err
 }
 
-// NewLocalElasticClient returns a local Elasticsearch client. This client can be used with dockerized elastic search such as
-// docker.elastic.co/elasticsearch/elasticsearch
-func NewLocalElasticClient(localElasticURL string, serviceName string) (ElasticClient, error) {
-	client, err := elastic.NewSimpleClient(
-		elastic.SetURL(localElasticURL),
-		// DEBUG: Uncomment the line below to enable full tracing of all http requests and responses
-		// elastic.SetTraceLog(log.New(os.Stdout, "ElasticSearchClient:", log.LstdFlags)),
-	)
-	return ElasticClient{
-		client,
-		log.New(os.Stdout, fmt.Sprintf("%v-search: ", serviceName), log.LstdFlags|log.Lshortfile|log.Lmicroseconds),
-	}, err
-}
+// NewElasticClient returns a new client for Elasticsearch, local or hosted through AWS.
+// The UseLocal flag determines which client is created.
+// With AWS Config this client can be used with elastic search clusters in AWS, both managed and hosted.
+func NewElasticClient(config ElasticConfig) (ElasticClient, error) {
+	if config.UseLocal {
+		var client *elastic.Client
+		var err error
+		if config.Debug {
+			client, err = elastic.NewSimpleClient(
+				elastic.SetURL(config.URL),
+				// Enables full tracing of all http requests and responses
+				elastic.SetTraceLog(config.Logger),
+			)
+		} else {
+			client, err = elastic.NewSimpleClient(
+				elastic.SetURL(config.URL),
+			)
+		}
+		return ElasticClient{
+			client,
+			config.Logger,
+		}, err
 
-// NewElasticClient returns a new client for AWS Elasticsearch. This client can be used with elastic search clusters in AWS, both managed and hosted.
-func NewElasticClient(config ElasticAWSConfig) (ElasticClient, error) {
-	signingClient := aws.NewV4SigningClient(credentials.NewStaticCredentials(
-		config.AccessKey,
-		config.SecretKey,
-		"",
-	), config.Region)
-	client, err := elastic.NewClient(
-		elastic.SetURL(config.URL),
-		elastic.SetScheme("https"),
-		elastic.SetSniff(false),
-		elastic.SetHttpClient(signingClient),
-	)
-	return ElasticClient{
-		client,
-		log.New(os.Stdout, fmt.Sprintf("%v-queue: ", config.ServiceName), log.LstdFlags|log.Lshortfile|log.Lmicroseconds),
-	}, err
+	} else {
+		signingClient := aws.NewV4SigningClient(credentials.NewStaticCredentials(
+			config.AccessKey,
+			config.SecretKey,
+			"",
+		), config.Region)
+		client, err := elastic.NewClient(
+			elastic.SetURL(config.URL),
+			elastic.SetScheme("https"),
+			elastic.SetSniff(false),
+			elastic.SetHttpClient(signingClient),
+		)
+		return ElasticClient{
+			client,
+			config.Logger,
+		}, err
+	}
 }
