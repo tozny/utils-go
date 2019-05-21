@@ -14,14 +14,14 @@ import (
 // ElasticClient wraps a Client for Elasticsearch interactions. The struct also includes a logger, that will get configured, in instantiation methods.
 type ElasticClient struct {
 	*elastic.Client
-	*logging.ServiceLogger
+	logging.Logger
 }
 
 // ElasticConfig wraps configuration to create either local or AWS Elasticsearch Client.
 type ElasticConfig struct {
 	UseLocal    bool
 	Debug       bool
-	Logger      *logging.ServiceLogger
+	Logger      logging.Logger
 	Region      string
 	URL         string
 	AccessKey   string
@@ -96,7 +96,7 @@ func NewElasticClient(config ElasticConfig) (ElasticClient, error) {
 			client, err = elastic.NewSimpleClient(
 				elastic.SetURL(config.URL),
 				// Enables full tracing of all http requests and responses
-				elastic.SetTraceLog(config.Logger.Logger),
+				elastic.SetTraceLog(config.Logger),
 			)
 		} else {
 			client, err = elastic.NewSimpleClient(
