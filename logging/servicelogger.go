@@ -40,9 +40,9 @@ func NewServiceLogger(out io.Writer, serviceName string, level string) ServiceLo
 	return logger
 }
 
-// Raw returns the underlying log.Logger for use in methods that do not support a full
+// RawLogger returns the underlying log.Logger for use in methods that do not support a full
 // logging.Logger with log levels.
-func (sl *ServiceLogger) Raw() *log.Logger {
+func (sl *ServiceLogger) RawLogger() *log.Logger {
 	return sl.Logger
 }
 
