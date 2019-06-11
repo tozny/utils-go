@@ -85,8 +85,8 @@ func (sl *ServiceLogger) Debugf(format string, v ...interface{}) {
 
 // Debugj is equivalent to Printj with "DEBUG" as the log level. Only output
 // when log level is CRITICAL or higher.
-func (sl *ServiceLogger) Debugj(v interface{}) {
-	sl.doPrintj("DEBUG", v)
+func (sl *ServiceLogger) Debugj(v interface{}) error {
+	return sl.doPrintj("DEBUG", v)
 }
 
 // Info is equivalent to Println with "INFO: SERVICENAME: " prepended. Only output
@@ -109,8 +109,8 @@ func (sl *ServiceLogger) Infof(format string, v ...interface{}) {
 
 // Infoj is equivalent to Printj with "INFO" as the log level. Only output
 // when log level is CRITICAL or higher.
-func (sl *ServiceLogger) Infoj(v interface{}) {
-	sl.doPrintj("INFO", v)
+func (sl *ServiceLogger) Infoj(v interface{}) error {
+	return sl.doPrintj("INFO", v)
 }
 
 // Error is equivalent to Print with "ERROR: SERVICENAME: " prepended. Only output
@@ -133,8 +133,8 @@ func (sl *ServiceLogger) Errorf(format string, v ...interface{}) {
 
 // Errorj is equivalent to Printj with "ERROR" as the log level. Only output
 // when log level is CRITICAL or higher.
-func (sl *ServiceLogger) Errorj(v interface{}) {
-	sl.doPrintj("ERROR", v)
+func (sl *ServiceLogger) Errorj(v interface{}) error {
+	return sl.doPrintj("ERROR", v)
 }
 
 // Critical is equivalent to Print with "CRITICAL: SERVICENAME: " prepended. Only output
@@ -157,8 +157,8 @@ func (sl *ServiceLogger) Criticalf(format string, v ...interface{}) {
 
 // Criticalj is equivalent to Printj with "CRITICAL" as the log level. Only output
 // when log level is CRITICAL or higher.
-func (sl *ServiceLogger) Criticalj(v interface{}) {
-	sl.doPrintj("CRITICAL", v)
+func (sl *ServiceLogger) Criticalj(v interface{}) error {
+	return sl.doPrintj("CRITICAL", v)
 }
 
 // Print with "SERVICENAME: " prepended. Only output when log level is SERVICE or higher.
@@ -177,8 +177,8 @@ func (sl *ServiceLogger) Printf(format string, v ...interface{}) {
 }
 
 // Printj adds service name and level to v and prints in json format.
-func (sl *ServiceLogger) Printj(v interface{}) {
-	sl.doPrintj("SERVICE", v)
+func (sl *ServiceLogger) Printj(v interface{}) error {
+	return sl.doPrintj("SERVICE", v)
 }
 
 // prefixString returns "LEVEL: SERVICENAME: " unless the level is at or below

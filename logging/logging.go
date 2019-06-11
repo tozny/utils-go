@@ -15,23 +15,24 @@ type Logger interface {
 	SetLevel(string)
 	Print(...interface{})
 	Printf(string, ...interface{})
-	Printj(...interface{})
+	Printj(interface{}) error
 	Println(...interface{})
 	Debug(...interface{})
 	Debugf(string, ...interface{})
-	Debugj(...interface{})
+	Debugj(interface{}) error
 	Debugln(...interface{})
 	Info(...interface{})
 	Infof(string, ...interface{})
-	Infoj(...interface{})
+	Infoj(interface{}) error
 	Infoln(...interface{})
 	Error(...interface{})
 	Errorf(string, ...interface{})
-	Errorj(...interface{})
+	Errorj(interface{}) error
 	Errorln(...interface{})
 	Critical(...interface{})
 	Criticalf(string, ...interface{})
 	Criticalln(...interface{})
+	Criticalj(interface{}) error
 }
 
 // LogWriter maps string values to io.Writer interfaces intended for logging output.
