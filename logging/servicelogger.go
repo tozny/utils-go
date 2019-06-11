@@ -1,6 +1,7 @@
 package logging
 
 import (
+	"encoding/json"
 	"fmt"
 	"io"
 	"log"
@@ -11,6 +12,13 @@ type ServiceLogger struct {
 	logLevel    int
 	serviceName string
 	*log.Logger
+}
+
+// ServiceLog adds additional level and service name to a provided log struct.
+type ServiceLog struct {
+	Level   string      `json:"level"`
+	Service string      `json:"service"`
+	Log     interface{} `json:"log"`
 }
 
 var levelMap = map[string]int{
@@ -75,6 +83,12 @@ func (sl *ServiceLogger) Debugf(format string, v ...interface{}) {
 	sl.doPrintf("DEBUG", format, v...)
 }
 
+// Debugj is equivalent to Printj with "DEBUG" as the log level. Only output
+// when log level is CRITICAL or higher.
+func (sl *ServiceLogger) Debugj(v interface{}) {
+	sl.doPrintj("DEBUG", v)
+}
+
 // Info is equivalent to Println with "INFO: SERVICENAME: " prepended. Only output
 // when log level is INFO or higher.
 func (sl *ServiceLogger) Info(v ...interface{}) {
@@ -91,6 +105,12 @@ func (sl *ServiceLogger) Infoln(v ...interface{}) {
 // when log level is INFO or higher.
 func (sl *ServiceLogger) Infof(format string, v ...interface{}) {
 	sl.doPrintf("INFO", format, v...)
+}
+
+// Infoj is equivalent to Printj with "INFO" as the log level. Only output
+// when log level is CRITICAL or higher.
+func (sl *ServiceLogger) Infoj(v interface{}) {
+	sl.doPrintj("INFO", v)
 }
 
 // Error is equivalent to Print with "ERROR: SERVICENAME: " prepended. Only output
@@ -111,6 +131,12 @@ func (sl *ServiceLogger) Errorf(format string, v ...interface{}) {
 	sl.doPrintf("ERROR", format, v...)
 }
 
+// Errorj is equivalent to Printj with "ERROR" as the log level. Only output
+// when log level is CRITICAL or higher.
+func (sl *ServiceLogger) Errorj(v interface{}) {
+	sl.doPrintj("ERROR", v)
+}
+
 // Critical is equivalent to Print with "CRITICAL: SERVICENAME: " prepended. Only output
 // when log level is CRITICAL.
 func (sl *ServiceLogger) Critical(v ...interface{}) {
@@ -129,6 +155,12 @@ func (sl *ServiceLogger) Criticalf(format string, v ...interface{}) {
 	sl.doPrintf("CRITICAL", format, v...)
 }
 
+// Criticalj is equivalent to Printj with "CRITICAL" as the log level. Only output
+// when log level is CRITICAL or higher.
+func (sl *ServiceLogger) Criticalj(v interface{}) {
+	sl.doPrintj("CRITICAL", v)
+}
+
 // Print with "SERVICENAME: " prepended. Only output when log level is SERVICE or higher.
 func (sl *ServiceLogger) Print(v ...interface{}) {
 	sl.doPrint("SERVICE", v...)
@@ -142,6 +174,11 @@ func (sl *ServiceLogger) Println(v ...interface{}) {
 // Printf with "SERVICENAME: " prepended. Only output when log level is SERVICE or higher.
 func (sl *ServiceLogger) Printf(format string, v ...interface{}) {
 	sl.doPrintf("SERVICE", format, v...)
+}
+
+// Printj adds service name and level to v and prints in json format.
+func (sl *ServiceLogger) Printj(v interface{}) {
+	sl.doPrintj("SERVICE", v)
 }
 
 // prefixString returns "LEVEL: SERVICENAME: " unless the level is at or below
@@ -167,6 +204,26 @@ func (sl *ServiceLogger) doPrintf(level string, format string, v ...interface{})
 	if sl.logLevel >= levelMap[level] {
 		sl.Output(2, sl.prefixString(level)+fmt.Sprintf(format, v...))
 	}
+}
+
+// doPrintj conditionally prints a log struct with the level and service name in a json format.
+// error occurs when json.Marshal fails for json.UnsupportedValueError or json.UnsupportedTypeError and will output the error instead.
+// If log level is below level, the message is not output.
+func (sl *ServiceLogger) doPrintj(level string, v interface{}) error {
+	if sl.logLevel >= levelMap[level] {
+		log := ServiceLog{
+			Level:   level,
+			Service: sl.serviceName,
+			Log:     v,
+		}
+		msg, err := json.Marshal(log)
+		if err != nil {
+			sl.Output(2, fmt.Sprintf("Failed to write %+v, err: %s", v, err.Error()))
+			return err
+		}
+		sl.Output(2, string(msg))
+	}
+	return nil
 }
 
 // doPrint conditionally prints a message prefixed with the log level and service name,
