@@ -7,6 +7,11 @@ import (
 	"net/http"
 )
 
+// Log is a generic log containing a descriptive message
+type Log struct {
+	Message string `json:"msg"`
+}
+
 // ErrorLog is a generic error log containing a descriptive message and the error
 type ErrorLog struct {
 	Message string `json:"msg"`
@@ -55,5 +60,19 @@ func NewErrorLog(msg string, err error) *ErrorLog {
 	return &ErrorLog{
 		Message: msg,
 		Error:   err.Error(),
+	}
+}
+
+func NewFormattedErrorLog(err error, format string, v ...interface{}) *ErrorLog {
+	return &ErrorLog{
+		Message: fmt.Sprintf(format, v...),
+		Error:   err.Error(),
+	}
+
+}
+
+func NewLog(msg string) *Log {
+	return &Log{
+		Message: msg,
 	}
 }
