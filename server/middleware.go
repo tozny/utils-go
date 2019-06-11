@@ -72,7 +72,7 @@ func DecorateHandlerFunc(f func(http.ResponseWriter, *http.Request), middleware 
 
 // JSONLoggingMiddleware wraps an HTTP handler and logs
 // the request and de-serialized JSON body.
-func JSONLoggingMiddleware(logger *logging.ServiceLogger) Middleware {
+func JSONLoggingMiddleware(logger logging.Logger) Middleware {
 	return MiddlewareFunc(func(h http.Handler, w http.ResponseWriter, r *http.Request) {
 		var requestBody interface{}
 		json.NewDecoder(r.Body).Decode(&requestBody)
