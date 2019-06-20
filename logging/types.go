@@ -28,8 +28,13 @@ type RequestErrorLog struct {
 	Header string      `json:"req_header"`
 }
 
-func (el *ErrorLog) FromRequest(req *http.Request) *RequestErrorLog {
-	return NewRequestErrorLog(errors.New(el.Error), el.Message, req, nil)
+// FromRequest appents request information to an ErrorLog
+func (l *ErrorLog) FromRequest(req *http.Request) *RequestErrorLog {
+	return NewRequestErrorLog(errors.New(l.Error), l.Message, req, nil)
+}
+
+func (l *Log) FromRequest(req *http.Request) *RequestErrorLog {
+	return NewRequestErrorLog(nil, l.Message, req, nil)
 }
 
 // NewRequestErrorLog constructs a RequestErrorLog doing the work of breaking up
@@ -73,7 +78,6 @@ func NewFormattedErrorLog(err error, format string, v ...interface{}) *ErrorLog 
 		Message: fmt.Sprintf(format, v...),
 		Error:   err.Error(),
 	}
-
 }
 
 func NewLog(msg string) *Log {
