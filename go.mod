@@ -4,6 +4,7 @@ require (
 	github.com/aws/aws-sdk-go v1.19.8
 	github.com/fortytw2/leaktest v1.3.0 // indirect
 	github.com/go-pg/pg v8.0.3+incompatible
+	github.com/go-redis/redis v6.15.2+incompatible
 	github.com/google/go-cmp v0.3.0 // indirect
 	github.com/google/uuid v1.1.0
 	github.com/jinzhu/inflection v0.0.0-20180308033659-04140366298a // indirect
