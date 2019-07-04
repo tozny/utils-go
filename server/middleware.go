@@ -13,10 +13,12 @@ import (
 )
 
 const (
-	// ToznyClientIDHeader is the headers key containing a client ID
+	// ToznyClientIDHeader is the header key containing a client ID
 	ToznyClientIDHeader = "X-TOZNY-CLIENT-ID"
-	// ToznyOpenAuthenticationTokenHeader is the header key contaning a Tot
+	// ToznyOpenAuthenticationTokenHeader is the header key containing a Tot
 	ToznyOpenAuthenticationTokenHeader = "X-TOZNY-TOT"
+	// ToznyAuthNHeader is the header key containing authentication information
+	ToznyAuthNHeader = "X-TOZNY-AUTHN"
 	// HealthCheckPathSuffix is a centrally defined health check path.
 	HealthCheckPathSuffix = "/healthcheck"
 	// ServiceCheckPathSuffix is a centrally defined service check path.
@@ -30,7 +32,7 @@ var (
 		map[string][]string{
 			"Access-Control-Allow-Origin":      []string{"*"},
 			"Access-Control-Allow-Methods":     []string{"*, GET, POST, DELETE, PUT, PATCH, OPTIONS, HEAD"}, // Because to Firefox * does not mean all.
-			"Access-Control-Allow-Headers":     []string{"Authorization, Content-Type, *"},           // Because to Firefox * does not mean all.
+			"Access-Control-Allow-Headers":     []string{"Authorization, Content-Type, *"},                  // Because to Firefox * does not mean all.
 			"Access-Control-Allow-Credentials": []string{"true"},
 			"Access-Control-Max-Age":           []string{"86400"},
 		},
