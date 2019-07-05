@@ -157,7 +157,7 @@ func (sl *ServiceLogger) prefixString(level string) string {
 // If log level is below level, the message is not output.
 func (sl *ServiceLogger) doPrint(level string, v ...interface{}) {
 	if sl.logLevel >= levelMap[level] {
-		sl.Output(2, sl.prefixString(level)+fmt.Sprint(v...))
+		sl.Output(3, sl.prefixString(level)+fmt.Sprint(v...))
 	}
 }
 
@@ -165,7 +165,7 @@ func (sl *ServiceLogger) doPrint(level string, v ...interface{}) {
 // level and service name. If log level is below level, the message is not output.
 func (sl *ServiceLogger) doPrintf(level string, format string, v ...interface{}) {
 	if sl.logLevel >= levelMap[level] {
-		sl.Output(2, sl.prefixString(level)+fmt.Sprintf(format, v...))
+		sl.Output(3, sl.prefixString(level)+fmt.Sprintf(format, v...))
 	}
 }
 
@@ -173,6 +173,6 @@ func (sl *ServiceLogger) doPrintf(level string, format string, v ...interface{})
 // followed by a newline. If log level is below level, the message is not output.
 func (sl *ServiceLogger) doPrintln(level string, v ...interface{}) {
 	if sl.logLevel >= levelMap[level] {
-		sl.Output(2, sl.prefixString(level)+fmt.Sprintln(v...))
+		sl.Output(3, sl.prefixString(level)+fmt.Sprintln(v...))
 	}
 }
