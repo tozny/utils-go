@@ -6,6 +6,7 @@ import (
 
 	"github.com/go-pg/pg"
 	migrations "github.com/robinjoseph08/go-pg-migrations"
+	"github.com/tozny/utils-go/logging"
 )
 
 var (
@@ -19,14 +20,14 @@ type DBConfig struct {
 	User          string
 	Database      string
 	Password      string
-	Logger        *log.Logger
+	Logger        logging.Logger
 	EnableLogging bool
 }
 
 // DB wraps a client for a database.
 type DB struct {
 	Client      *pg.DB
-	Logger      *log.Logger
+	Logger      logging.Logger
 	initializer func(*DB)
 }
 
@@ -71,7 +72,7 @@ func New(config DBConfig) DB {
 		Password: config.Password,
 	})
 	if config.EnableLogging {
-		db.AddQueryHook(dbLogger{logger: config.Logger})
+		db.AddQueryHook(dbLogger{logger: config.Logger.Raw()})
 	}
 	return DB{
 		Client:      db,
