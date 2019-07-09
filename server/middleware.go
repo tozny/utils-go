@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"io"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -76,8 +77,11 @@ func DecorateHandlerFunc(f func(http.ResponseWriter, *http.Request), middleware 
 // the request and de-serialized JSON body.
 func JSONLoggingMiddleware(logger *logging.ServiceLogger) Middleware {
 	return MiddlewareFunc(func(h http.Handler, w http.ResponseWriter, r *http.Request) {
+		var rawBodyBuffer bytes.Buffer
+		// Copy over raw bytes to the rawBodyBuffer when the body is read.
+		body := io.TeeReader(r.Body, &rawBodyBuffer)
 		var requestBody interface{}
-		json.NewDecoder(r.Body).Decode(&requestBody)
+		json.NewDecoder(body).Decode(&requestBody)
 		logger.Print(map[string]interface{}{
 			"request_method":    r.Method,
 			"request_uri":       r.RequestURI,
@@ -86,9 +90,7 @@ func JSONLoggingMiddleware(logger *logging.ServiceLogger) Middleware {
 			"request_body":      requestBody,
 		})
 		// Repopulate body with the data read
-		jsonBytes := new(bytes.Buffer)
-		json.NewEncoder(jsonBytes).Encode(requestBody)
-		r.Body = ioutil.NopCloser(jsonBytes)
+		r.Body = ioutil.NopCloser(&rawBodyBuffer)
 		h.ServeHTTP(w, r)
 	})
 }
