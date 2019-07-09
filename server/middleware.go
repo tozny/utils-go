@@ -80,8 +80,6 @@ func JSONLoggingMiddleware(logger *logging.ServiceLogger) Middleware {
 		var rawBodyBuffer bytes.Buffer
 		// Copy over raw bytes to the rawBodyBuffer when the body is read.
 		body := io.TeeReader(r.Body, &rawBodyBuffer)
-		// Repopulate the request body for the ultimate consumer of this request
-		r.Body = ioutil.NopCloser(&rawBodyBuffer)
 		var requestBody interface{}
 		json.NewDecoder(body).Decode(&requestBody)
 		logger.Print(map[string]interface{}{
