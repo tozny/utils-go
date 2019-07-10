@@ -33,7 +33,7 @@ type DB struct {
 
 // Close closes a connection to a database. Once close has been called calling other methods on db will error.
 func (db *DB) Close() {
-	db.Logger.Println("Closing database connection")
+	db.Logger.Debug("Closing database connection")
 	db.Client.Close()
 }
 
@@ -59,6 +59,7 @@ func (d dbLogger) AfterQuery(q *pg.QueryEvent) {
 	query, err := q.FormattedQuery()
 	if err != nil {
 		d.logger.Printf("error %s executing query\n%+v ", err, query)
+		return
 	}
 	d.logger.Printf("executed query\n%+v ", query)
 }
@@ -96,12 +97,14 @@ func (db *DB) Initializer(initializer func(*DB)) {
 // once a second in a loop until they run successfully.
 func RunMigrations(db *DB) {
 	for {
+		db.Logger.Debug("DB.RunMigrations: Running migrations.")
 		err := db.Migrate()
 		if err != nil {
-			db.Logger.Println(err)
+			db.Logger.Errorf("DB.RunMigrations: error %v running migrations, will retry in 1 second.", err)
 			time.Sleep(1 * time.Second)
 			continue
 		}
+		db.Logger.Debug("DB.RunMigrations: Migrations finished.")
 		break
 	}
 }
