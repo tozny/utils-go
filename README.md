@@ -45,5 +45,11 @@ go get github.com/tozny/utils-go@vX.Y.Z
 
 and the go `get` tool will fetch the published artifact and update that modules `go.mod` and`go.sum` files with the updated dependency. Currently the list of modules that depend on this module are
 
-- [Search Service](https://github.com/tozny/hook-service)
-- [Hook Service](https://github.com/tozny/e3dbSearchService)
+- [Search Service (Private)](https://github.com/tozny/hook-service)
+- [Hook Service (Private)](https://github.com/tozny/e3dbSearchService)
+- [Storage Service (Private)](https://github.com/tozny/storage-service)
+- [Billing Service (Private)](https://github.com/tozny/billing-service)
+- [Cyclops (Private)](https://github.com/tozny/cyclops-service)
+- [Client Service (Private)](https://github.com/tozny/client-service)
+- [Metrics Service (Private)](https://github.com/tozny/metrics-service)
+- [Identity Management Service (Private)](https://github.com/tozny/identity-management-service)
