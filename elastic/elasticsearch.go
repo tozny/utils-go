@@ -89,40 +89,32 @@ func (ec *ElasticClient) AddIndexMapping(ctx context.Context, indexName string, 
 // The UseLocal flag determines which client is created.
 // With AWS Config this client can be used with elastic search clusters in AWS, both managed and hosted.
 func NewElasticClient(config ElasticConfig) (ElasticClient, error) {
+	var client *elastic.Client
+	var err error
 	if config.UseLocal {
-		var client *elastic.Client
-		var err error
-		if config.Debug {
-			client, err = elastic.NewSimpleClient(
-				elastic.SetURL(config.URL),
-				// Enables full tracing of all http requests and responses
-				elastic.SetTraceLog(config.Logger),
-			)
-		} else {
-			client, err = elastic.NewSimpleClient(
-				elastic.SetURL(config.URL),
-			)
-		}
-		return ElasticClient{
-			client,
-			config.Logger,
-		}, err
-
+		client, err = elastic.NewSimpleClient(
+			elastic.SetURL(config.URL))
 	} else {
 		signingClient := aws.NewV4SigningClient(credentials.NewStaticCredentials(
 			config.AccessKey,
 			config.SecretKey,
 			"",
 		), config.Region)
-		client, err := elastic.NewClient(
+		client, err = elastic.NewClient(
 			elastic.SetURL(config.URL),
 			elastic.SetScheme("https"),
 			elastic.SetSniff(false),
 			elastic.SetHttpClient(signingClient),
 		)
-		return ElasticClient{
-			client,
-			config.Logger,
-		}, err
 	}
+	if config.Debug {
+		// Enables full tracing of all http requests and responses
+		debugFunc := elastic.SetTraceLog(config.Logger)
+		// Always returns nil
+		_ = debugFunc(client)
+	}
+	return ElasticClient{
+		client,
+		config.Logger,
+	}, err
 }
