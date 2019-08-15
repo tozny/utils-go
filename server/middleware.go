@@ -126,7 +126,7 @@ type E3DBTokenAuthenticator interface {
 
 // AuthMiddleware provides http middleware for enforcing requests as coming from e3db
 // authenticated entities (either external or internal clients) for any request with a path
-// not ending in `HealthCheckPathSuffix` or `ServiceCheckPathSuffix`
+// not ending in `HealthCheckPathSuffix` or `ServiceCheckPathSuffix` via a function which validates a Bearer token
 func AuthMiddleware(auth E3DBTokenAuthenticator, privateService bool, logger *log.Logger) Middleware {
 	return MiddlewareFunc(func(h http.Handler, w http.ResponseWriter, r *http.Request) {
 		// Check to see if this request is a health or service check requests
@@ -153,6 +153,43 @@ func AuthMiddleware(auth E3DBTokenAuthenticator, privateService bool, logger *lo
 		// Add the clients id and token to the request headers
 		r.Header.Set(ToznyClientIDHeader, clientID)
 		r.Header.Set(ToznyOpenAuthenticationTokenHeader, token)
+		// Authenticated, continue processing request
+		h.ServeHTTP(w, r)
+	})
+}
+
+// A RequestAuthenticator provides the ability to authenticate
+// an E3DB entity using an HTTP request
+type RequestAuthenticator interface {
+	// AuthenticateRequest validates the provided request authenticates
+	// an internal OR external e3db client, returning the clientID and
+	// validity of the provided request, and error (if any).
+	AuthenticateRequest(ctx context.Context, request *http.Request, internal bool) (clientID string, valid bool, err error)
+}
+
+// RequestAuthMiddleware provides http middleware for enforcing requests as coming from e3db
+// authenticated entities (either external or internal clients) for any request with a path
+// not ending in `HealthCheckPathSuffix` or `ServiceCheckPathSuffix` via a function which
+// validates the http.Request
+func RequestAuthMiddleware(auth RequestAuthenticator, privateService bool, logger *log.Logger) Middleware {
+	return MiddlewareFunc(func(h http.Handler, w http.ResponseWriter, r *http.Request) {
+		// Check to see if this request is a health or service check requests
+		requestPath := r.URL.Path
+		isMonitoringRequest := strings.HasSuffix(requestPath, HealthCheckPathSuffix) || strings.HasSuffix(requestPath, ServiceCheckPathSuffix)
+		if isMonitoringRequest {
+			// NoOp authentication, continue processing request
+			h.ServeHTTP(w, r)
+			return
+		}
+		ctx := context.Background()
+		clientID, valid, err := auth.AuthenticateRequest(ctx, r, privateService)
+		if err != nil || !valid {
+			logger.Printf("RequestAuthMiddleware: error validating token %s\n", err)
+			HandleError(w, http.StatusUnauthorized, ErrorInvalidAuthentication)
+			return
+		}
+		// Add the clients id and token to the request headers
+		r.Header.Set(ToznyClientIDHeader, clientID)
 		// Authenticated, continue processing request
 		h.ServeHTTP(w, r)
 	})
