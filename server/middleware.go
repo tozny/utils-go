@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"fmt"
 	"io"
 	"io/ioutil"
 	"log"
@@ -124,10 +125,46 @@ type E3DBTokenAuthenticator interface {
 	AuthenticateE3DBClient(ctx context.Context, token string, internal bool) (clientID string, valid bool, err error)
 }
 
+type e3dbTokenRequestAuthenticator struct {
+	E3DBTokenAuthenticator
+}
+
+func (auth e3dbTokenRequestAuthenticator) AuthenticateRequest(ctx context.Context, r *http.Request, internal bool) (string, bool, error) {
+	// Check to see if this request is a health or service check requests
+	token, err := ExtractBearerToken(r)
+	if err != nil {
+		return "", false, fmt.Errorf("e3dbAuthHandler: error extracting bearer token %s", err)
+	}
+	clientID, valid, err := auth.AuthenticateE3DBClient(ctx, token, internal)
+	if err != nil || !valid {
+		return "", false, fmt.Errorf("e3dbAuthHandler: error validating token %s", err)
+	}
+	// Add the token to the request headers
+	r.Header.Set(ToznyOpenAuthenticationTokenHeader, token)
+	return clientID, valid, err
+}
+
 // AuthMiddleware provides http middleware for enforcing requests as coming from e3db
 // authenticated entities (either external or internal clients) for any request with a path
-// not ending in `HealthCheckPathSuffix` or `ServiceCheckPathSuffix`
+// not ending in `HealthCheckPathSuffix` or `ServiceCheckPathSuffix` via a function which validates a Bearer token
 func AuthMiddleware(auth E3DBTokenAuthenticator, privateService bool, logger *log.Logger) Middleware {
+	return RequestAuthMiddleware(&e3dbTokenRequestAuthenticator{auth}, privateService, logger)
+}
+
+// A RequestAuthenticator provides the ability to authenticate
+// an E3DB entity using an HTTP request
+type RequestAuthenticator interface {
+	// AuthenticateRequest validates the provided request authenticates
+	// an internal OR external e3db client, returning the clientID and
+	// validity of the provided request, and error (if any).
+	AuthenticateRequest(ctx context.Context, request *http.Request, internal bool) (clientID string, valid bool, err error)
+}
+
+// RequestAuthMiddleware provides http middleware for enforcing requests as coming from e3db
+// authenticated entities (either external or internal clients) for any request with a path
+// not ending in `HealthCheckPathSuffix` or `ServiceCheckPathSuffix` via a function which
+// validates the http.Request
+func RequestAuthMiddleware(auth RequestAuthenticator, privateService bool, logger *log.Logger) Middleware {
 	return MiddlewareFunc(func(h http.Handler, w http.ResponseWriter, r *http.Request) {
 		// Check to see if this request is a health or service check requests
 		requestPath := r.URL.Path
@@ -137,22 +174,15 @@ func AuthMiddleware(auth E3DBTokenAuthenticator, privateService bool, logger *lo
 			h.ServeHTTP(w, r)
 			return
 		}
-		token, err := ExtractBearerToken(r)
-		if err != nil {
-			logger.Printf("E3dbAuthHandler: error extracting bearer token %s\n", err)
-			HandleError(w, http.StatusUnauthorized, err)
-			return
-		}
 		ctx := context.Background()
-		clientID, valid, err := auth.AuthenticateE3DBClient(ctx, token, privateService)
+		clientID, valid, err := auth.AuthenticateRequest(ctx, r, privateService)
 		if err != nil || !valid {
-			logger.Printf("E3dbAuthHandler: error validating token %s\n", err)
-			HandleError(w, http.StatusUnauthorized, ErrorInvalidAuthToken)
+			logger.Printf("RequestAuthMiddleware: error validating request: %s\n", err)
+			HandleError(w, http.StatusUnauthorized, ErrorInvalidAuthentication)
 			return
 		}
 		// Add the clients id and token to the request headers
 		r.Header.Set(ToznyClientIDHeader, clientID)
-		r.Header.Set(ToznyOpenAuthenticationTokenHeader, token)
 		// Authenticated, continue processing request
 		h.ServeHTTP(w, r)
 	})

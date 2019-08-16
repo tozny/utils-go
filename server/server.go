@@ -14,8 +14,10 @@ var (
 	ErrorInvalidAuthorizationHeader = errors.New("InvalidAuthorizationHeader")
 	// ErrorUnsupportedAuthorizationType is a static error returned if the auth type is not in the whitelist
 	ErrorUnsupportedAuthorizationType = fmt.Errorf("UnsupportedAuthorizationType, supported types are %v", SupportedAuthTypes)
-	// ErrorInvalidAuthToken is a static error returned when authorization fails
+	// ErrorInvalidAuthToken is a static error returned when authentication fails
 	ErrorInvalidAuthToken = errors.New("InvalidAuthToken")
+	// ErrorInvalidAuthentication is a static error returned when request authentication fails
+	ErrorInvalidAuthentication = errors.New("Invalid authentication attempt")
 )
 
 // ExtractBearerToken attempts to extract an Oauth bearer token
