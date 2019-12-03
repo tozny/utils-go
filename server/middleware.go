@@ -9,6 +9,7 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"regexp"
 	"strings"
 
 	"github.com/tozny/utils-go/logging"
@@ -76,14 +77,21 @@ func DecorateHandlerFunc(f func(http.ResponseWriter, *http.Request), middleware 
 
 // JSONLoggingMiddleware wraps an HTTP handler and logs
 // the request and de-serialized JSON body.
-func JSONLoggingMiddleware(logger *logging.ServiceLogger) Middleware {
+func JSONLoggingMiddleware(logger *logging.ServiceLogger, routeLoggingBlacklist []*regexp.Regexp) Middleware {
 	return MiddlewareFunc(func(h http.Handler, w http.ResponseWriter, r *http.Request) {
+		// Only log the request if the route isn't blacklisted
+		for _, routeBlacklistRegex := range routeLoggingBlacklist {
+			if routeBlacklistRegex.MatchString(r.RequestURI) {
+				h.ServeHTTP(w, r)
+				return
+			}
+		}
 		var rawBodyBuffer bytes.Buffer
 		// Copy over raw bytes to the rawBodyBuffer when the body is read.
 		body := io.TeeReader(r.Body, &rawBodyBuffer)
 		var requestBody interface{}
 		json.NewDecoder(body).Decode(&requestBody)
-		logger.Print(map[string]interface{}{
+		logger.Debug(map[string]interface{}{
 			"request_method":    r.Method,
 			"request_uri":       r.RequestURI,
 			"requester_address": r.RemoteAddr,
