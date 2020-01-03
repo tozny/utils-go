@@ -17,6 +17,7 @@ require (
 	github.com/pkg/errors v0.8.1 // indirect
 	github.com/robinjoseph08/go-pg-migrations v0.1.2
 	github.com/stretchr/testify v1.4.0 // indirect
+	golang.org/x/crypto v0.0.0-20190308221718-c2843e01d9a2
 	golang.org/x/net v0.0.0-20190311183353-d8887717615a // indirect
 	golang.org/x/sync v0.0.0-20190423024810-112230192c58 // indirect
 	golang.org/x/text v0.3.2 // indirect
