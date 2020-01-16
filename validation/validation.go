@@ -3,6 +3,7 @@ package validation
 import (
 	"encoding/base64"
 	"strings"
+	"time"
 )
 
 // IsValidKey ensures a base64URL encoded key of a specific type is base64URL
@@ -40,4 +41,14 @@ func IsValidDotted(subject string) (int, bool) {
 		}
 	}
 	return len(parts), true
+}
+
+// IsTimeWithinWindow determines if the time given happened within the defined windowSeconds
+func IsTimeWithinWindow(timeToValidate time.Time, windowSeconds int) bool {
+	now := time.Now()
+	previousValidTime := now.Add(time.Duration(-windowSeconds) * time.Second)
+	if previousValidTime.After(timeToValidate) {
+		return false
+	}
+	return true
 }
