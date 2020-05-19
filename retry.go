@@ -37,7 +37,7 @@ func Await(ready Ready, maxRetries int) bool {
 func AwaitInterval(ready Ready, interval int, timeout int) bool {
 	timeoutTime := time.Now().Add(time.Duration(timeout) * time.Second)
 	intervalTime := time.Duration(interval) * time.Second
-	for timeoutTime.Before(time.Now()) {
+	for timeoutTime.After(time.Now()) {
 		success := ready()
 		if !success {
 			time.Sleep(intervalTime)
