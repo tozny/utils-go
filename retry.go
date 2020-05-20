@@ -29,3 +29,21 @@ func Await(ready Ready, maxRetries int) bool {
 	}
 	return false
 }
+
+// AwaitInterval waits until the ready function is ready or errors, returning
+// success and error (if any). It checks if the function is ready once, then
+// waits the specified time interval (in seconds) and retries. If the specified
+// timeout is past (taken in seconds) it will return false.
+func AwaitInterval(ready Ready, interval int, timeout int) bool {
+	timeoutTime := time.Now().Add(time.Duration(timeout) * time.Second)
+	intervalTime := time.Duration(interval) * time.Second
+	for timeoutTime.After(time.Now()) {
+		success := ready()
+		if !success {
+			time.Sleep(intervalTime)
+			continue
+		}
+		return true
+	}
+	return false
+}
