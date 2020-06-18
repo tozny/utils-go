@@ -3,9 +3,7 @@ package server
 import (
 	"bytes"
 	"context"
-	"encoding/json"
 	"fmt"
-	"io"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -86,20 +84,23 @@ func JSONLoggingMiddleware(logger *logging.ServiceLogger, routeLoggingBlacklist 
 				return
 			}
 		}
-		var rawBodyBuffer bytes.Buffer
-		// Copy over raw bytes to the rawBodyBuffer when the body is read.
-		body := io.TeeReader(r.Body, &rawBodyBuffer)
-		var requestBody interface{}
-		json.NewDecoder(body).Decode(&requestBody)
+		var bodyBytes []byte
+		var err error
+		if r.Body != nil {
+			bodyBytes, err = ioutil.ReadAll(r.Body)
+			if err != nil {
+				logger.Errorf("Error reading request body %s", err)
+			}
+		}
+		// Repopulate body with the data read
+		r.Body = ioutil.NopCloser(bytes.NewBuffer(bodyBytes))
 		logger.Debug(map[string]interface{}{
 			"request_method":    r.Method,
 			"request_uri":       r.RequestURI,
 			"requester_address": r.RemoteAddr,
 			"requester_host":    r.Host,
-			"request_body":      requestBody,
+			"request_body":      string(bodyBytes),
 		})
-		// Repopulate body with the data read
-		r.Body = ioutil.NopCloser(&rawBodyBuffer)
 		h.ServeHTTP(w, r)
 	})
 }
