@@ -227,7 +227,6 @@ func NewSQSQueue(config SQSQueueConfig) (Queue, error) {
 	if err != nil {
 		return sqsQueue, err
 	}
-	fmt.Printf("THIS IS CREATE QUEUE RESP %+v\n", createQueueResponse)
 	sqsQueue = &SQSQueue{
 		Name:                     config.QueueName,
 		url:                      *createQueueResponse.QueueUrl,
