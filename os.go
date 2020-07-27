@@ -57,6 +57,17 @@ func MustGetenvFloatNonZero(env string) float64 {
 	return value
 }
 
+// MustGetenvBool attempts to lookup and return the value associated with the specified environment variable identifier and cast it to a bool,
+// panic'ing if no value is associated with that identifier, if it cannot be cast
+func MustGetenvBool(env string) bool {
+	value := MustGetenv(env)
+	boolVal, err := strconv.ParseBool(value)
+	if err != nil {
+		panic(fmt.Sprintf("Provided Environment variable for: %v could not be parsed to a bool: %s\n", env, value))
+	}
+	return boolVal
+}
+
 // EnvOrDefault fetches an environment variable value, or if not set returns the fallback value
 func EnvOrDefault(key string, fallback string) string {
 	if val, ok := os.LookupEnv(key); ok {

@@ -1,6 +1,7 @@
 package database
 
 import (
+	"crypto/tls"
 	"log"
 	"time"
 
@@ -22,6 +23,7 @@ type DBConfig struct {
 	Password      string
 	Logger        logging.Logger
 	EnableLogging bool
+	EnableTLS     bool
 }
 
 // DB wraps a client for a database.
@@ -66,12 +68,17 @@ func (d dbLogger) AfterQuery(q *pg.QueryEvent) {
 
 // New returns a new DB object which wraps a connection to the database specified in config
 func New(config DBConfig) DB {
-	db := pg.Connect(&pg.Options{
+	options := &pg.Options{
 		Addr:     config.Address,
 		User:     config.User,
 		Database: config.Database,
 		Password: config.Password,
-	})
+	}
+	if config.EnableTLS {
+		options.TLSConfig = &tls.Config{}
+	}
+
+	db := pg.Connect(options)
 	if config.EnableLogging {
 		db.AddQueryHook(dbLogger{logger: config.Logger.Raw()})
 	}
