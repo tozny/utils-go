@@ -75,7 +75,7 @@ func New(config DBConfig) DB {
 		Password: config.Password,
 	}
 	if config.EnableTLS {
-		options.TLSConfig = &tls.Config{}
+		options.TLSConfig = &tls.Config{InsecureSkipVerify: true}
 	}
 
 	db := pg.Connect(options)
