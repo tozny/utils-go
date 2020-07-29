@@ -24,6 +24,7 @@ type DBConfig struct {
 	Logger        logging.Logger
 	EnableLogging bool
 	EnableTLS     bool
+	VerifyTLS     bool
 }
 
 // DB wraps a client for a database.
@@ -75,7 +76,7 @@ func New(config DBConfig) DB {
 		Password: config.Password,
 	}
 	if config.EnableTLS {
-		options.TLSConfig = &tls.Config{InsecureSkipVerify: true}
+		options.TLSConfig = &tls.Config{InsecureSkipVerify: config.VerifyTLS}
 	}
 
 	db := pg.Connect(options)
