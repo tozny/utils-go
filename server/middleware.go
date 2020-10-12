@@ -5,7 +5,6 @@ import (
 	"context"
 	"fmt"
 	"io/ioutil"
-	"log"
 	"net/http"
 	"regexp"
 	"strings"
@@ -75,7 +74,7 @@ func DecorateHandlerFunc(f func(http.ResponseWriter, *http.Request), middleware 
 
 // JSONLoggingMiddleware wraps an HTTP handler and logs
 // the request and de-serialized JSON body.
-func JSONLoggingMiddleware(logger *logging.ServiceLogger, routeLoggingBlacklist []*regexp.Regexp) Middleware {
+func JSONLoggingMiddleware(logger logging.Logger, routeLoggingBlacklist []*regexp.Regexp) Middleware {
 	return MiddlewareFunc(func(h http.Handler, w http.ResponseWriter, r *http.Request) {
 		// Only log the request if the route isn't blacklisted
 		for _, routeBlacklistRegex := range routeLoggingBlacklist {
@@ -157,7 +156,7 @@ func (auth e3dbTokenRequestAuthenticator) AuthenticateRequest(ctx context.Contex
 // AuthMiddleware provides http middleware for enforcing requests as coming from e3db
 // authenticated entities (either external or internal clients) for any request with a path
 // not ending in `HealthCheckPathSuffix` or `ServiceCheckPathSuffix` via a function which validates a Bearer token
-func AuthMiddleware(auth E3DBTokenAuthenticator, privateService bool, logger *log.Logger) Middleware {
+func AuthMiddleware(auth E3DBTokenAuthenticator, privateService bool, logger logging.Logger) Middleware {
 	return RequestAuthMiddleware(&e3dbTokenRequestAuthenticator{auth, privateService}, logger)
 }
 
@@ -174,7 +173,7 @@ type RequestAuthenticator interface {
 // authenticated entities (either external or internal clients) for any request with a path
 // not ending in `HealthCheckPathSuffix` or `ServiceCheckPathSuffix` via a function which
 // validates the http.Request
-func RequestAuthMiddleware(auth RequestAuthenticator, logger *log.Logger) Middleware {
+func RequestAuthMiddleware(auth RequestAuthenticator, logger logging.Logger) Middleware {
 	return MiddlewareFunc(func(h http.Handler, w http.ResponseWriter, r *http.Request) {
 		// Check to see if this request is a health or service check requests
 		requestPath := r.URL.Path
@@ -187,7 +186,7 @@ func RequestAuthMiddleware(auth RequestAuthenticator, logger *log.Logger) Middle
 		ctx := context.Background()
 		clientID, err := auth.AuthenticateRequest(ctx, r)
 		if err != nil {
-			logger.Printf("RequestAuthMiddleware: error validating request: %s\n", err)
+			logger.Errorf("RequestAuthMiddleware: error validating request: %s\n", err)
 			HandleError(w, http.StatusUnauthorized, ErrorInvalidAuthentication)
 			return
 		}

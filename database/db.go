@@ -2,7 +2,6 @@ package database
 
 import (
 	"crypto/tls"
-	"log"
 	"time"
 
 	"github.com/go-pg/pg"
@@ -49,7 +48,7 @@ func (db *DB) Migrate() error {
 // dbLogger implements the DBLogger pattern for the go-pg module
 // https://github.com/go-pg/pg/wiki/FAQ#how-can-i-viewlog-queries-this-library-generates
 type dbLogger struct {
-	logger *log.Logger
+	logger logging.Logger
 }
 
 // BeforeQuery is a function that will be invoked
@@ -81,7 +80,7 @@ func New(config DBConfig) DB {
 
 	db := pg.Connect(options)
 	if config.EnableLogging {
-		db.AddQueryHook(dbLogger{logger: config.Logger.Raw()})
+		db.AddQueryHook(dbLogger{logger: config.Logger})
 	}
 	return DB{
 		Client:      db,

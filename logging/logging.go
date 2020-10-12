@@ -3,7 +3,7 @@ package logging
 import (
 	"io"
 	"io/ioutil"
-	"log"
+	"net/http"
 	"os"
 )
 
@@ -11,7 +11,6 @@ import (
 // log level aware. This is especially useful when another interface supports
 // logging with logging levels. This interface can be embedded.
 type Logger interface {
-	Raw() *log.Logger
 	SetLevel(string)
 	Print(...interface{})
 	Printf(string, ...interface{})
@@ -28,6 +27,18 @@ type Logger interface {
 	Critical(...interface{})
 	Criticalf(string, ...interface{})
 	Criticalln(...interface{})
+}
+
+type StructuredLogger interface {
+	Logger
+	Warn(...interface{})
+	Warnf(string, ...interface{})
+	Warnln(...interface{})
+	Debugw(message string, r *http.Request, v ...interface{})
+	Infow(message string, r *http.Request, v ...interface{})
+	Warnw(message string, r *http.Request, v ...interface{})
+	Errorw(message string, r *http.Request, v ...interface{})
+	CriticalW(message string, r *http.Request, v ...interface{})
 }
 
 // LogWriter maps string values to io.Writer interfaces intended for logging output.

@@ -3,14 +3,15 @@ package queue
 import (
 	"errors"
 	"fmt"
+	"strconv"
+
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/sqs"
 	"github.com/aws/aws-sdk-go/service/sqs/sqsiface"
 	"github.com/google/uuid"
-	"log"
-	"strconv"
+	"github.com/tozny/utils-go/logging"
 )
 
 const (
@@ -23,15 +24,15 @@ var (
 
 // SQSQueueConfig wraps configuration for an SQS queue
 type SQSQueueConfig struct {
-	QueueName                string      // The name of the queue to configure
-	SQSEndpoint              string      // Which SQS service endpoint to use for queue interactions
-	SQSRegion                string      // Which AWS region the queue is located in e.g. us-west-2
-	APIKeyID                 string      // AWS API Secret Key ID for IAM user with sqs permissions
-	APIKeySecret             string      // AWS API Secret Key for IAM user with sqs permissions
-	VisibilityTimeoutSeconds int64       // How long a message should be invisible after being dequeued
-	DequeueBatchSize         int64       // Max number of messages that can be dequeued
-	PollSeconds              int64       // How long to poll for dequeueable messages when dequeing messages from the queue
-	Logger                   *log.Logger // Logger to use for queue trace logs
+	QueueName                string         // The name of the queue to configure
+	SQSEndpoint              string         // Which SQS service endpoint to use for queue interactions
+	SQSRegion                string         // Which AWS region the queue is located in e.g. us-west-2
+	APIKeyID                 string         // AWS API Secret Key ID for IAM user with sqs permissions
+	APIKeySecret             string         // AWS API Secret Key for IAM user with sqs permissions
+	VisibilityTimeoutSeconds int64          // How long a message should be invisible after being dequeued
+	DequeueBatchSize         int64          // Max number of messages that can be dequeued
+	PollSeconds              int64          // How long to poll for dequeueable messages when dequeing messages from the queue
+	Logger                   logging.Logger // Logger to use for queue trace logs
 }
 
 // Queue wraps a concrete(AWS SQS) distributed queue for
@@ -43,7 +44,7 @@ type SQSQueue struct {
 	visibilityTimeoutSeconds int64
 	dequeueBatchSize         int64
 	pollSeconds              int64
-	logger                   *log.Logger
+	logger                   logging.Logger
 }
 
 // DeleteMessage deletes the message with messageID from the queue
