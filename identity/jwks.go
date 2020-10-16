@@ -25,6 +25,78 @@ type ctxKey string
 // Expected exposes the JWT expected type through this package for ease of use
 type Expected = jwt.Expected
 
+// PublicClaims exposes the JWT claims type through this package for ease of use
+type PublicClaims = jwt.Claims
+
+// Claims wraps a set of parse claims, as well as keeps the raw claims bytes
+// handy so they can be decoded into different structs with ease.
+type Claims struct {
+	rawClaims json.RawMessage
+	allClaims map[string]interface{}
+}
+
+// ClaimsFromMap creates a claims struct from an existing map
+func ClaimsFromMap(allClaims map[string]interface{}) (Claims, error) {
+	rawClaims, err := json.Marshal(&allClaims)
+	return Claims{rawClaims, allClaims}, err
+}
+
+// ClaimsFromJSON creates a claims struct from a set of raw bytes
+func ClaimsFromJSON(rawClaims []byte) (Claims, error) {
+	var allClaims map[string]interface{}
+	err := json.Unmarshal(rawClaims, &allClaims)
+	return Claims{rawClaims, allClaims}, err
+}
+
+// MarshalClaims creates a Claims instance from a JSON serializable struct
+func MarshalClaims(v interface{}) (Claims, error) {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return Claims{}, err
+	}
+	return ClaimsFromJSON(b)
+}
+
+// Unmarshal takes a destination struct and decodes the claims information into it
+func (c *Claims) Unmarshal(dest interface{}) error {
+	return json.Unmarshal(c.rawClaims, dest)
+}
+
+// Raw provides access to the raw claims bytes
+func (c *Claims) Raw() []byte {
+	return c.rawClaims
+}
+
+// Get allows access to the parse map taking a string as a key and returning the
+// stored interface, as well as a boolean indicating the key was or was not
+// present in the claims at all.
+func (c *Claims) Get(key string) (interface{}, bool) {
+	res, ok := c.allClaims[key]
+	return res, ok
+}
+
+// ValidatePublicClaims ensures the public claims in a token are valid, including
+// timestamps included in the token within a 1 minute leeway
+func (c *Claims) ValidatePublicClaims(expected Expected) error {
+	var publicClaims PublicClaims
+	err := c.Unmarshal(&publicClaims)
+	if err != nil {
+		return fmt.Errorf("unable to marshal public claims: %v", err)
+	}
+	return publicClaims.Validate(expected)
+}
+
+// ValidatePublicClaimsWithLeeway ensures the public claims in a token are valid,
+// including timestamps included in the token within the duration specified
+func (c *Claims) ValidatePublicClaimsWithLeeway(expected Expected, leeway time.Duration) error {
+	var publicClaims PublicClaims
+	err := c.Unmarshal(&publicClaims)
+	if err != nil {
+		return fmt.Errorf("unable to marshal public claims: %v", err)
+	}
+	return publicClaims.ValidateWithLeeway(expected, leeway)
+}
+
 // JWKS wraps management of JWKS, typically fetched from a public endpoint
 type JWKS struct {
 	Endpoint        string
@@ -44,7 +116,7 @@ func NewJWKS(endpoint string, timeout int, logger logging.Logger) JWKS {
 }
 
 // Middleware returns a middleware function which will authenticate a request with the JWK set
-func (jwks *JWKS) Middleware(expected Expected) server.Middleware {
+func (jwks *JWKS) Middleware(validateClaims func(Claims) error) server.Middleware {
 	return server.MiddlewareFunc(func(h http.Handler, w http.ResponseWriter, r *http.Request) {
 		bearer, err := server.ExtractBearerToken(r)
 		if err != nil {
@@ -59,27 +131,22 @@ func (jwks *JWKS) Middleware(expected Expected) server.Middleware {
 			return
 		}
 
-		claims := jwt.Claims{}
+		claimsMap := map[string]interface{}{}
 		keys, err := jwks.Set(r.Context())
 		if err != nil {
 			jwks.Errorf("Failed to fetch JWK Set: %q", err)
 			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 			return
 		}
-		if err := token.Claims(&keys, &claims); err != nil {
+		if err := token.Claims(&keys, &claimsMap); err != nil {
+			fmt.Printf("Invalid JWS signature on Bearer token using JWKS: %+v", keys)
 			jwks.Errorf("Invalid JWS signature on Bearer token using JWKS: %+v", keys)
 			http.Error(w, http.StatusText(http.StatusUnauthorized), http.StatusUnauthorized)
 			return
 		}
-		// Clone expected state, updating time to now
-		jwtExpected := jwt.Expected{
-			Issuer:   expected.Issuer,
-			Subject:  expected.Subject,
-			Audience: expected.Audience,
-			Time:     time.Now(),
-		}
-		if err := claims.Validate(jwtExpected); err != nil {
-			jwks.Errorf("JWT claims are not valid: expected: %+v, got: %+v", expected, claims)
+		claims, err := ClaimsFromMap(claimsMap)
+		if err := validateClaims(claims); err != nil {
+			jwks.Errorf("JWT claims failed to validate: %+v", claims)
 			http.Error(w, http.StatusText(http.StatusUnauthorized), http.StatusUnauthorized)
 			return
 		}
@@ -142,11 +209,11 @@ func (jwks *JWKS) load(ctx context.Context) (jose.JSONWebKeySet, error) {
 
 // AuthenticatedClaims fetches the parsed claims struct out of request context if
 // it is present, erroring if the claims do not appear present.
-func AuthenticatedClaims(r *http.Request) (jwt.Claims, error) {
+func AuthenticatedClaims(r *http.Request) (Claims, error) {
 	claimsInterface := r.Context().Value(ClaimsKey)
-	claims, ok := claimsInterface.(jwt.Claims)
+	claims, ok := claimsInterface.(Claims)
 	if !ok {
-		return claims, errors.New("JWT Claims not present in request context")
+		return claims, errors.New("claims not present in request context")
 	}
 	return claims, nil
 }

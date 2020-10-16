@@ -67,6 +67,7 @@ func TestCanFetchJWKS(t *testing.T) {
 }
 
 func TestValidateRequests(t *testing.T) {
+	testAuthorizedParty := "tozny"
 	testResponseBody := "You are authenticated"
 	// Set up new key
 	privateKey, err := newRSASigKey(2048, "RS256")
@@ -82,7 +83,7 @@ func TestValidateRequests(t *testing.T) {
 		t.Fatalf("unable to create signer: %+v", err)
 	}
 	// Create a test JWT
-	claims, token, err := newTestToken(signer)
+	claims, token, err := newTestToken(signer, testAuthorizedParty)
 	if err != nil {
 		t.Fatalf("error creating test token: %+v", err)
 	}
@@ -112,9 +113,28 @@ func TestValidateRequests(t *testing.T) {
 	recorder := httptest.NewRecorder()
 	req := httptest.NewRequest(http.MethodGet, "/", nil)
 	req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", token))
+	validator := func(claims Claims) error {
+		err := claims.ValidatePublicClaims(expected)
+		if err != nil {
+			t.Logf("Could not validate public claims: %v", err)
+			return err
+		}
+		var extraClaims TestExtraClaims
+		err = claims.Unmarshal(&extraClaims)
+		if err != nil {
+			t.Logf("Could not unmarshal extra claims: %v", err)
+			return err
+		}
+		if extraClaims.AuthorizedParty != testAuthorizedParty {
+			err = fmt.Errorf("Authorized party should have been %q but was %q", testAuthorizedParty, extraClaims.AuthorizedParty)
+			t.Log(err)
+			return err
+		}
+		return nil
+	}
 	handler := server.ApplyMiddleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte(testResponseBody))
-	}), jwks.Middleware(expected))
+	}), jwks.Middleware(validator))
 	handler.ServeHTTP(recorder, req)
 	// Validate the response
 	resp := recorder.Result()
@@ -125,7 +145,7 @@ func TestValidateRequests(t *testing.T) {
 		t.Fatalf("unable to read response body: %+v", err)
 	}
 	if string(body) != testResponseBody {
-		t.Errorf("unexpected response body. Expected: %q Recieved: %q", testResponseBody, body)
+		t.Errorf("unexpected response body. Expected: %q Received: %q", testResponseBody, body)
 	}
 }
 
@@ -147,9 +167,13 @@ func newRSASigKey(size int, alg string) (jose.JSONWebKey, error) {
 	return key, nil
 }
 
-func newTestToken(signer jose.Signer) (jwt.Claims, string, error) {
+type TestExtraClaims struct {
+	AuthorizedParty string `json:"azp,omitempty"`
+}
+
+func newTestToken(signer jose.Signer, azp string) (jwt.Claims, string, error) {
 	now := time.Now()
-	claims := jwt.Claims{
+	publicClaims := jwt.Claims{
 		Issuer:    "test_issuer",
 		Subject:   uuid.New().String(),
 		Audience:  jwt.Audience{"test1", "test2"},
@@ -157,8 +181,10 @@ func newTestToken(signer jose.Signer) (jwt.Claims, string, error) {
 		IssuedAt:  jwt.NewNumericDate(now),
 		Expiry:    jwt.NewNumericDate(now.Add(1 * time.Hour)),
 	}
-
-	token, err := jwt.Signed(signer).Claims(claims).FullSerialize()
+	extraClaims := TestExtraClaims{
+		AuthorizedParty: azp,
+	}
+	token, err := jwt.Signed(signer).Claims(publicClaims).Claims(extraClaims).FullSerialize()
 	// if there was an error, it is getting returned here
-	return claims, token, err
+	return publicClaims, token, err
 }
