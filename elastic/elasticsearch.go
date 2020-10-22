@@ -24,6 +24,7 @@ type ElasticConfig struct {
 	Logger      logging.Logger
 	Region      string
 	URL         string
+	Scheme      string
 	AccessKey   string
 	SecretKey   string
 	ServiceName string
@@ -100,9 +101,16 @@ func NewElasticClient(config ElasticConfig) (ElasticClient, error) {
 			config.SecretKey,
 			"",
 		), config.Region)
+		var scheme string
+		if config.Scheme == "http" {
+			scheme = "http"
+		} else {
+			scheme = "https"
+		}
+
 		client, err = elastic.NewClient(
 			elastic.SetURL(config.URL),
-			elastic.SetScheme("https"),
+			elastic.SetScheme(scheme),
 			elastic.SetSniff(false),
 			elastic.SetHttpClient(signingClient),
 		)
