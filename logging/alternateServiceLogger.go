@@ -38,7 +38,7 @@ func NewZapSugaredServiceLogger(out string, serviceName string, level string, in
 	config := zap.NewProductionConfig()
 	config.OutputPaths = []string{out}
 	// Set logging level
-	config.Level.SetLevel(zap.ErrorLevel)
+	config.Level.SetLevel(zapLevelMap[level])
 	config.EncoderConfig.NameKey = "service"
 	config.EncoderConfig.MessageKey = "message"
 	if initialFields == nil {
