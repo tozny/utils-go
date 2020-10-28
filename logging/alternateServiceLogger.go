@@ -25,46 +25,38 @@ var zapLevelMap = map[string]zapcore.Level{
 	"DEBUG":    zapcore.DebugLevel,
 }
 
-// NewZapSugaredServiceLogger returns a logger with designated logging levels for a particular service.
-// out is the location for logs to be output such as "stdout"
-// service is the value for the "service" key.
-// level is the minimum logging level that will be output
-// initialFields is a map of key value pairs that will be logged with all log message produced by this logger.
-// consoleLog if set to false outputs in a json like format (Though can have duplicate keys which downstream processors may handle in undefined ways).
-//   Formats the log in a more traditional one line fashion with a leading timestamp and log level.
-func NewZapSugaredServiceLogger(out string, serviceName string, level string, initialFields map[string]interface{}, consoleLog bool) AltServiceLogger {
-	return NewZapSugaredServiceLoggerWithSkip(out, serviceName, level, initialFields, consoleLog, 1)
+type AltServiceLoggerConfig struct {
+	Output        string                 //out is the location for logs to be output such as "stdout"
+	ServiceName   string                 // service is the value for the "service" key.
+	Level         string                 // level is the minimum logging level that will be output
+	InitialFields map[string]interface{} // initialFields is a map of key value pairs that will be logged with all log message produced by this logger.
+	ConsoleLog    bool                   // consoleLog if set to false outputs in a json like format (Though can have duplicate keys which downstream processors may handle in undefined ways). Formats the log in a more traditional one line fashion with a leading timestamp and log level.
+	SkipLevels    int                    // level is used for configuring the caller line number. Services usually want 1, db loggers usually want 2
 }
 
-// NewZapSugaredServiceLoggerWithSkip returns a logger with designated logging levels for a particular service.
-// out is the location for logs to be output such as "stdout"
-// service is the value for the "service" key.
-// level is the minimum logging level that will be output
-// initialFields is a map of key value pairs that will be logged with all log message produced by this logger.
-// consoleLog if set to false outputs in a json like format (Though can have duplicate keys which downstream processors may handle in undefined ways).
-//   Formats the log in a more traditional one line fashion with a leading timestamp and log level.
-// Skip level is used for configuring the caller line number. Services often want 1
-func NewZapSugaredServiceLoggerWithSkip(out string, serviceName string, level string, initialFields map[string]interface{}, consoleLog bool, skipLevel int) AltServiceLogger {
+// NewZapSugaredServiceLogger returns a logger with designated logging levels for a particular service.
+func NewZapSugaredServiceLogger(lc AltServiceLoggerConfig) AltServiceLogger {
 	var sugaredZapLogger *zap.SugaredLogger
 	// Get a default configuration
 	config := zap.NewProductionConfig()
-	config.OutputPaths = []string{out}
+	config.OutputPaths = []string{lc.Output}
 	// Set logging level
-	config.Level.SetLevel(zapLevelMap[level])
+	config.Level.SetLevel(zapLevelMap[lc.Level])
 	config.EncoderConfig.NameKey = "service"
 	config.EncoderConfig.MessageKey = "message"
-	if initialFields == nil {
-		initialFields = make(map[string]interface{}, 1)
+	if lc.InitialFields == nil {
+		lc.InitialFields = make(map[string]interface{}, 1)
 	}
-	initialFields["facility"] = "user-level"
-	config.InitialFields = initialFields
+	lc.InitialFields["facility"] = "user-level"
+	config.InitialFields = lc.InitialFields
 	config.EncoderConfig.EncodeLevel = zapcore.CapitalLevelEncoder
 	config.EncoderConfig.EncodeTime = zapcore.ISO8601TimeEncoder
-	zapLogger, err := config.Build(zap.AddCallerSkip(skipLevel))
+
+	zapLogger, err := config.Build(zap.AddCallerSkip(lc.SkipLevels))
 	if err != nil {
 		panic(fmt.Errorf("Logger could not be built. This is not an expected outcome. ERR: %+v", err))
 	}
-	if consoleLog {
+	if lc.ConsoleLog {
 		config.EncoderConfig.StacktraceKey = ""
 		zapLogger = zapLogger.WithOptions(
 			zap.WrapCore(
@@ -72,11 +64,11 @@ func NewZapSugaredServiceLoggerWithSkip(out string, serviceName string, level st
 					return zapcore.NewCore(zapcore.NewConsoleEncoder(config.EncoderConfig), zapcore.AddSync(os.Stderr), config.Level)
 				}))
 	}
-	sugaredZapLogger = zapLogger.Sugar().Named(serviceName)
+	sugaredZapLogger = zapLogger.Sugar().Named(lc.ServiceName)
 	sugaredZapLogger.Desugar().With()
 	logger := AltServiceLogger{
 		logConfig:     &config,
-		serviceName:   serviceName,
+		serviceName:   lc.ServiceName,
 		SugaredLogger: sugaredZapLogger,
 	}
 	return logger
