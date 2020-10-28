@@ -33,6 +33,18 @@ var zapLevelMap = map[string]zapcore.Level{
 // consoleLog if set to false outputs in a json like format (Though can have duplicate keys which downstream processors may handle in undefined ways).
 //   Formats the log in a more traditional one line fashion with a leading timestamp and log level.
 func NewZapSugaredServiceLogger(out string, serviceName string, level string, initialFields map[string]interface{}, consoleLog bool) AltServiceLogger {
+	return NewZapSugaredServiceLoggerWithSkip(out, serviceName, level, initialFields, consoleLog, 1)
+}
+
+// NewZapSugaredServiceLoggerWithSkip returns a logger with designated logging levels for a particular service.
+// out is the location for logs to be output such as "stdout"
+// service is the value for the "service" key.
+// level is the minimum logging level that will be output
+// initialFields is a map of key value pairs that will be logged with all log message produced by this logger.
+// consoleLog if set to false outputs in a json like format (Though can have duplicate keys which downstream processors may handle in undefined ways).
+//   Formats the log in a more traditional one line fashion with a leading timestamp and log level.
+// Skip level is used for configuring the caller line number. Services often want 1
+func NewZapSugaredServiceLoggerWithSkip(out string, serviceName string, level string, initialFields map[string]interface{}, consoleLog bool, skipLevel int) AltServiceLogger {
 	var sugaredZapLogger *zap.SugaredLogger
 	// Get a default configuration
 	config := zap.NewProductionConfig()
@@ -48,7 +60,7 @@ func NewZapSugaredServiceLogger(out string, serviceName string, level string, in
 	config.InitialFields = initialFields
 	config.EncoderConfig.EncodeLevel = zapcore.CapitalLevelEncoder
 	config.EncoderConfig.EncodeTime = zapcore.ISO8601TimeEncoder
-	zapLogger, err := config.Build(zap.AddCallerSkip(1))
+	zapLogger, err := config.Build(zap.AddCallerSkip(skipLevel))
 	if err != nil {
 		panic(fmt.Errorf("Logger could not be built. This is not an expected outcome. ERR: %+v", err))
 	}
