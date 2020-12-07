@@ -1,11 +1,10 @@
 module github.com/tozny/utils-go
 
 require (
+	github.com/Shopify/sarama v1.27.2
 	github.com/aws/aws-sdk-go v1.19.8
-	github.com/fortytw2/leaktest v1.3.0 // indirect
 	github.com/go-pg/pg v8.0.3+incompatible
 	github.com/go-redis/redis v6.15.2+incompatible
-	github.com/google/go-cmp v0.3.1 // indirect
 	github.com/google/uuid v1.1.0
 	github.com/jinzhu/inflection v1.0.0 // indirect
 	github.com/mailru/easyjson v0.0.0-20190626092158-b2ccc519800e // indirect
@@ -15,8 +14,7 @@ require (
 	github.com/robinjoseph08/go-pg-migrations v0.1.2
 	go.uber.org/multierr v1.6.0 // indirect
 	go.uber.org/zap v1.16.0
-	golang.org/x/crypto v0.0.0-20190510104115-cbcb75029529
-	golang.org/x/text v0.3.2 // indirect
+	golang.org/x/crypto v0.0.0-20200820211705-5c72a883971a
 	mellium.im/sasl v0.2.1 // indirect
 )
 
