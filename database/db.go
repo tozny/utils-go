@@ -1,6 +1,7 @@
 package database
 
 import (
+	"context"
 	"crypto/tls"
 	"time"
 
@@ -51,19 +52,29 @@ type dbLogger struct {
 	logger logging.Logger
 }
 
+// context key for query timing context
+var dlTimingKey struct{} = struct{}{}
+
 // BeforeQuery is a function that will be invoked
 // before any database query is run with the query to run.
-func (d dbLogger) BeforeQuery(q *pg.QueryEvent) {}
+func (d dbLogger) BeforeQuery(q *pg.QueryEvent) {
+	q.Ctx = context.WithValue(q.Ctx, dlTimingKey, time.Now())
+}
 
 // AfterQuery is a function that will be executed
 // after any database query is run with the query ran.
 func (d dbLogger) AfterQuery(q *pg.QueryEvent) {
 	query, err := q.FormattedQuery()
 	if err != nil {
-		d.logger.Printf("error %s executing query\n%+v ", err, query)
+		d.logger.Errorf("error %q executing query\n%+v ", err, query)
 		return
 	}
-	d.logger.Printf("executed query\n%+v ", query)
+	start, ok := q.Ctx.Value(dlTimingKey).(time.Time)
+	if !ok {
+		d.logger.Errorf("Unable find timing context in query: ", query)
+		return
+	}
+	d.logger.Infof("executed query in %s: %s", time.Now().Sub(start), query)
 }
 
 // New returns a new DB object which wraps a connection to the database specified in config
