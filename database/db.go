@@ -58,6 +58,9 @@ var dlTimingKey struct{} = struct{}{}
 // BeforeQuery is a function that will be invoked
 // before any database query is run with the query to run.
 func (d dbLogger) BeforeQuery(q *pg.QueryEvent) {
+	if q.Ctx == nil {
+		q.Ctx = context.Background()
+	}
 	q.Ctx = context.WithValue(q.Ctx, dlTimingKey, time.Now())
 }
 
