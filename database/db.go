@@ -77,7 +77,7 @@ func (d dbLogger) AfterQuery(q *pg.QueryEvent) {
 		d.logger.Errorf("Unable find timing context in query: ", query)
 		return
 	}
-	d.logger.Infof("executed query in %s: %s", time.Now().Sub(start), query)
+	d.logger.Infof("executed query in %s:\n%+v", time.Now().Sub(start), query)
 }
 
 // New returns a new DB object which wraps a connection to the database specified in config
