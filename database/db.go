@@ -114,6 +114,12 @@ func (db *DB) Initializer(initializer func(*DB)) {
 	db.initializer = initializer
 }
 
+// Ping makes a call to the database and returns an error if any
+func (db *DB) Ping() error {
+	_, err := db.Client.Exec("SELECT 1")
+	return err
+}
+
 // RunMigrations is an initialization function for a DB which attempts to run migrations
 // once a second in a loop until they run successfully.
 func RunMigrations(db *DB) {
