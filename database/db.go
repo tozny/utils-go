@@ -69,12 +69,12 @@ func (d dbLogger) BeforeQuery(q *pg.QueryEvent) {
 func (d dbLogger) AfterQuery(q *pg.QueryEvent) {
 	query, err := q.FormattedQuery()
 	if err != nil {
-		d.logger.Errorf("error %q executing query\n%+v ", err, query)
+		d.logger.Errorf("error %q executing query:\n%+v ", err, query)
 		return
 	}
 	start, ok := q.Ctx.Value(dlTimingKey).(time.Time)
 	if !ok {
-		d.logger.Errorf("Unable find timing context in query: ", query)
+		d.logger.Errorf("Unable find timing context in query:\n%+v ", query)
 		return
 	}
 	d.logger.Infof("executed query in %s:\n%+v", time.Now().Sub(start), query)
