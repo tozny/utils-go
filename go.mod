@@ -11,6 +11,7 @@ require (
 	github.com/olivere/elastic v6.2.17+incompatible
 	github.com/onsi/ginkgo v1.8.0 // indirect
 	github.com/onsi/gomega v1.5.0 // indirect
+	github.com/pascaldekloe/jwt v1.10.0 // indirect
 	github.com/robinjoseph08/go-pg-migrations v0.1.2
 	go.uber.org/multierr v1.6.0 // indirect
 	go.uber.org/zap v1.16.0
