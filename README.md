@@ -33,8 +33,14 @@ Releasing involves tagging a commit in this repository, and pushing the tag. Tag
 To publish a new version, run
 
 ```
-go tag vX.Y.Z
-go push origin vX.Y.Z
+git tag vX.Y.Z
+git push origin vX.Y.Z
+```
+
+or using the make `version` command
+
+```
+make version version=X.Y.Z
 ```
 
 To consume published updates from other repositories that depends on this module run
