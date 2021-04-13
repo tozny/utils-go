@@ -15,6 +15,15 @@ func MustGetenv(env string) string {
 	return value
 }
 
+// TransitiveMustGetenv will (if a transitive dependnecy such as the value of another environment is set)
+//  attempt to lookup the specified environment variable and return its string panicing if not provided
+func TransitiveMustGetenv(env string, active bool) string {
+	if !active {
+		return ""
+	}
+	return MustGetenv(env)
+}
+
 // MustGetenvInt attempts to lookup and return the value associated with the specified environment variable identifier and cast it to an int,
 //panic'ing if no value is associated with that identifier or it cannot be cast
 func MustGetenvInt(env string) int {
@@ -24,6 +33,15 @@ func MustGetenvInt(env string) int {
 		panic(fmt.Sprintf("Provided Environment variable for: %v can not be cast to int: %s\n", env, value))
 	}
 	return intVal
+}
+
+// TransitiveMustGetenvInt will (if a transitive dependnecy such as the value of another environment is set)
+// attempt to lookup the specified environment variable parsed as an int and return its value panicing if not provided
+func TransitiveMustGetenvInt(env string, active bool) int {
+	if !active {
+		return 0
+	}
+	return MustGetenvInt(env)
 }
 
 // MustGetenvIntNonZero attempts to lookup and return the value associated with the specified environment variable identifier and cast it to an int,
@@ -47,6 +65,15 @@ func MustGetenvFloat(env string) float64 {
 	return floatVal
 }
 
+// TransitiveMustGetenvFloat will (if a transitive dependnecy such as the value of another environment is set)
+// attempt to lookup the specified environment variable parsed as a float and return its value panicing if not provided
+func TransitiveMustGetenvFloat(env string, active bool) float64 {
+	if !active {
+		return 0
+	}
+	return MustGetenvFloat(env)
+}
+
 // MustGetenvFloatNonZero attempts to lookup and return the value associated with the specified environment variable identifier and cast it to a float,
 //panic'ing if no value is associated with that identifier, if it cannot be cast, or if once cast equals zero
 func MustGetenvFloatNonZero(env string) float64 {
@@ -66,6 +93,15 @@ func MustGetenvBool(env string) bool {
 		panic(fmt.Sprintf("Provided Environment variable for: %v could not be parsed to a bool: %s\n", env, value))
 	}
 	return boolVal
+}
+
+// TransitiveMustGetenvBool will (if a transitive dependnecy such as the value of another environment is set)
+// attempt to lookup the specified environment variable parsed as a bool and return its value panicing if not provided
+func TransitiveMustGetenvBool(env string, active bool) bool {
+	if !active {
+		return false
+	}
+	return MustGetenvBool(env)
 }
 
 // EnvOrDefault fetches an environment variable value, or if not set returns the fallback value
