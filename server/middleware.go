@@ -30,7 +30,7 @@ var (
 	DefaultCORSHeaders = []http.Header{
 		// https://developer.mozilla.org/en-US/docs/Web/HTTP/CORS#The_HTTP_response_headers
 		map[string][]string{
-			"Access-Control-Allow-Origin":      []string{"*"},
+			"Access-Control-Allow-Origin":      []string{"127.0.0.1"},
 			"Access-Control-Allow-Methods":     []string{"*, GET, POST, DELETE, PUT, PATCH, OPTIONS, HEAD"},    // Because to Firefox * does not mean all.
 			"Access-Control-Allow-Headers":     []string{"Authorization, Content-Type, User-Agent, Accepts,*"}, // Because to Firefox * does not mean all.
 			"Access-Control-Allow-Credentials": []string{"true"},
