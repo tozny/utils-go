@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"net/http"
 	"regexp"
@@ -23,6 +24,8 @@ const (
 	HealthCheckPathSuffix = "/healthcheck"
 	// ServiceCheckPathSuffix is a centrally defined service check path.
 	ServiceCheckPathSuffix = "/servicecheck"
+	// RawBodyContextKey is the context key for the raw body value in a request context
+	RawBodyContextKey = "rawBody"
 )
 
 var (
@@ -204,5 +207,32 @@ func TrimSlash(h http.Handler) http.Handler {
 		r.URL.Path = strings.TrimSuffix(r.URL.Path, "/")
 		// Call the next handler, which can be another middleware in the chain, or the final handler.
 		h.ServeHTTP(w, r)
+	})
+}
+
+// ExtractBodyMiddleware returns a handler that extract the raw body of a request
+// into the request context so that it is generally available to handlers down the
+// middleware chain. To use the raw body, get the value from the context and then
+// use type assertion to a []byte slice. With this middleware, the request body
+// can be read once, and then accessed by all future middleware and the final
+// http handler.
+func ExtractBodyMiddleware(logger logging.Logger) Middleware {
+	return MiddlewareFunc(func(next http.Handler, w http.ResponseWriter, r *http.Request) {
+		var rawBody []byte
+		if r.Body != nil {
+			var rawBodyBuffer bytes.Buffer
+			// Read the request body
+			body := io.TeeReader(r.Body, &rawBodyBuffer)
+			var err error
+			rawBody, err = ioutil.ReadAll(body)
+			if err != nil {
+				w.WriteHeader(http.StatusRequestEntityTooLarge)
+				return
+			}
+			// Repopulate the request body for the ultimate consumer of this request
+			r.Body = ioutil.NopCloser(&rawBodyBuffer)
+		}
+		rawBodyContext := context.WithValue(r.Context(), RawBodyContextKey, rawBody)
+		next.ServeHTTP(w, r.WithContext(rawBodyContext))
 	})
 }
