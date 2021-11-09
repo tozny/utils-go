@@ -5,6 +5,8 @@ package stream
 
 import (
 	"time"
+
+	"github.com/tozny/utils-go/auth"
 )
 
 // Event wraps information and metadata about an event published to a stream
@@ -34,4 +36,26 @@ type WriteOnlyStream interface {
 type Stream interface {
 	ReadOnlyStream
 	WriteOnlyStream
+}
+
+// EventPublisher wraps functionality for publishing tagged event data
+// TODO moq mocking!
+type EventPublisher interface {
+	// Publish publishes an event in the topic with a particular tag & string message
+	Publish(tag string, message string) error
+	// PublishData is responsible for converting arbitrary data to a string & publishing it as an event
+	PublishData(tag string, data auth.Claims) error
+}
+
+// NoOpEventClient is an EventPublisher that ignores all events and doesn't publish them
+type NoOpEventClient struct{}
+
+func (c *NoOpEventClient) Publish(tag string, message string) error {
+	// do nothing! event gets dropped.
+	return nil
+}
+
+func (c *NoOpEventClient) PublishData(tag string, data auth.Claims) error {
+	// do nothing! event gets dropped.
+	return nil
 }
