@@ -49,6 +49,12 @@ func (tf *TokenFactory) Sign(claims Claims, validTime time.Duration) ([]byte, er
 	return claims.RSASign(tf.Algorithm, tf.SigningKey)
 }
 
+// Parse converts a signed token to its Claims & verifies its signature
+// will return a non-nil error if the token was not signed by this TokenFactory's SigningKey
+func (tf *TokenFactory) Parse(token []byte) (*Claims, error) {
+	return jwt.RSACheck(token, &tf.SigningKey.PublicKey)
+}
+
 // parseRSA key takes a base64url RSA private key in PEM format and decodes a useable RSA private key
 func parseRSAKey(key string) (*rsa.PrivateKey, error) {
 	rsaPrivateKey := &rsa.PrivateKey{}
