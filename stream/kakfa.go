@@ -96,7 +96,7 @@ func (ks *KafkaStream) Subscribe(close chan struct{}) (<-chan Event, error) {
 		for _, partition := range streamPartitions {
 			partitionConsumer, err := ks.consumer.ConsumePartition(topic, partition, offset)
 			if err != nil {
-				ks.logger.Errorf("Subscribe: Error %s to starting consumer for partition %d", partition, err)
+				ks.logger.Errorf("Subscribe: Error %s to starting consumer for partition %d", err, partition)
 				continue
 			}
 			// Start goroutine to run until the close channel is closed by the caller
