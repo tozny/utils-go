@@ -55,6 +55,17 @@ func (tf *TokenFactory) Parse(token []byte) (*Claims, error) {
 	return jwt.RSACheck(token, &tf.SigningKey.PublicKey)
 }
 
+// ParseAndVerifyToken converts a signed token to its Claims and verifies it signature
+// with the passed in public signing key, returning a non-nil error if the token as not signed
+// by the signing key.
+func ParseAndVerifyToken(token []byte, publicKey string) (*Claims, error) {
+	rsaPubicKey, err := x509.ParsePKCS1PublicKey([]byte(publicKey))
+	if err != nil {
+		return nil, fmt.Errorf("error %s. could not parse public key", err)
+	}
+	return jwt.RSACheck(token, rsaPubicKey)
+}
+
 // parseRSA key takes a base64url RSA private key in PEM format and decodes a useable RSA private key
 func parseRSAKey(key string) (*rsa.PrivateKey, error) {
 	rsaPrivateKey := &rsa.PrivateKey{}
