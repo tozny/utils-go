@@ -60,6 +60,8 @@ type EventPublisher interface {
 	Publish(tag string, message string) error
 	// PublishData is responsible for converting arbitrary data to a string & publishing it as an event
 	PublishData(tag string, data auth.Claims) error
+	// PublishCloudEvent publishes an event in the topic in the CloudEvents format
+	PublishCloudEvent(tag string, eventType string, eventSource string, contentType string, data interface{}) error
 }
 
 // NoOpEventClient is an EventPublisher that ignores all events and doesn't publish them
@@ -71,6 +73,12 @@ func (c *NoOpEventClient) Publish(tag string, message string) error {
 }
 
 func (c *NoOpEventClient) PublishData(tag string, data auth.Claims) error {
+	// do nothing! event gets dropped.
+	return nil
+}
+
+func (c *NoOpEventClient) PublishCloudEvent(tag string, eventType string, eventSource string, contentType string,
+	data interface{}) error {
 	// do nothing! event gets dropped.
 	return nil
 }
