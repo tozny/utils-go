@@ -1,16 +1,21 @@
 package stream
 
 import (
+	"context"
 	"fmt"
-
-	"github.com/tozny/utils-go/logging"
-
 	"github.com/Shopify/sarama"
+	"github.com/cloudevents/sdk-go/protocol/kafka_sarama/v2"
+	cloudevents "github.com/cloudevents/sdk-go/v2"
+	cloudevent "github.com/cloudevents/sdk-go/v2/event"
+	"github.com/google/uuid"
+	"github.com/tozny/utils-go/logging"
+	"log"
 )
 
 const (
 	AnyPartitionPublishFlag = -1  // Value to use to signal Kafka client to publish messages to any partition
 	SubscribeBufferSize     = 256 // Max number of messages to buffer when subscribing to a stream
+	defaultReceiverGroupId  = "tozny-cloudevents"
 )
 
 // KafkaStreamConfig wraps configuration for a Kafka stream
@@ -26,11 +31,13 @@ type KafkaStreamConfig struct {
 // KafkaStream wraps a concrete (Apacha Kafka) distributed stream
 // processing backend for publishing and subscribing to events.
 type KafkaStream struct {
-	BrokerEndpoints []string            // List of broker endpoints used to publish and or subscribe to this Kafka stream
-	logger          logging.Logger      // Logger to use for stream trace logs
-	config          KafkaStreamConfig   // Private and static configuration for this Kafka stream
-	producer        sarama.SyncProducer // Private Kafka client for synchronous publishing of messages to a Kafka stream
-	consumer        sarama.Consumer     // Private Kafka client for consuming messages from a Kafka stream
+	BrokerEndpoints []string               // List of broker endpoints used to publish and or subscribe to this Kafka stream
+	logger          logging.Logger         // Logger to use for stream trace logs
+	config          KafkaStreamConfig      // Private and static configuration for this Kafka stream
+	producer        sarama.SyncProducer    // Private Kafka client for synchronous publishing of messages to a Kafka stream
+	consumer        sarama.Consumer        // Private Kafka client for consuming messages from a Kafka stream
+	sender          *kafka_sarama.Sender   // Private Kafka client for sending CloudEvents from a Kafka stream
+	receiver        *kafka_sarama.Consumer // Private Kafka client for consuming CloudEvents from a Kafka stream
 }
 
 func convertEventToMessage(event Event, partition int32) *sarama.ProducerMessage {
@@ -151,5 +158,90 @@ func NewKafkaStream(config KafkaStreamConfig) (Stream, error) {
 	kafkaStream.config = config
 	kafkaStream.logger = config.Logger
 
+	// Initialize a CloudEvents Sender Client and add it to the KafkaStream
+	sender, err := kafka_sarama.NewSenderFromSyncProducer(config.Topic, kafkaProducer)
+	if err != nil {
+		log.Fatalf("Failed to create sender: %s", err.Error())
+	}
+	kafkaStream.sender = sender
+
+	receiver, err := kafka_sarama.NewConsumer(config.BrokerEndpoints, kafkaConfig, defaultReceiverGroupId, config.Topic)
+	if err != nil {
+		log.Fatalf("Failed to create receiver: %s", err.Error())
+	}
+	kafkaStream.receiver = receiver
+
 	return kafkaStream, nil
+}
+
+func (ks *KafkaStream) Send(event CloudEvent) error {
+	//defer ks.sender.Close(context.Background())
+	client, err := cloudevents.NewClient(ks.sender, cloudevents.WithTimeNow(), cloudevents.WithUUIDs())
+	if err != nil {
+		log.Fatalf("Failed to create CloudEvents client, %v", err)
+		return err
+	}
+
+	cloudEvent := createCloudEventFromEvent(event)
+	if result := client.Send(
+		kafka_sarama.WithMessageKey(context.Background(), sarama.StringEncoder(event.Tag)),
+		cloudEvent,
+	); cloudevents.IsUndelivered(result) {
+		log.Printf("Failed to send: %v", result)
+	} else {
+		log.Printf("Message accepted: %t", cloudevents.IsACK(result))
+	}
+	return nil
+}
+
+func (ks *KafkaStream) Receive(close chan struct{}) (<-chan CloudEvent, error) {
+	events := make(chan CloudEvent)
+	client, err := cloudevents.NewClient(ks.receiver, cloudevents.WithTimeNow(), cloudevents.WithUUIDs())
+	if err != nil {
+		log.Fatalf("Failed to create receiver client, %v", err)
+		return events, err
+	}
+	// Start the receiver
+	go func() {
+		log.Printf("Listening to consuming topic %s\n", ks.config.Topic)
+		err = client.StartReceiver(context.Background(), func(ctx context.Context, event cloudevents.Event) {
+			events <- createEventFromCloudEvent(event)
+		})
+		if err != nil {
+			log.Fatalf("Failed to start receiver: %s", err)
+		} else {
+			log.Printf("Receiver stopped\n")
+		}
+	}()
+	// Start goroutine to run until the close channel is closed by the caller
+	go func(receiver *kafka_sarama.Consumer) {
+		<-close
+		ks.logger.Debug("Receiver: close signal")
+		err := receiver.Close(context.Background())
+		if err != nil {
+			log.Fatalf("Failed to close receiver")
+			return
+		}
+	}(ks.receiver)
+	return events, nil
+}
+
+func createCloudEventFromEvent(event CloudEvent) cloudevent.Event {
+	e := cloudevents.NewEvent()
+	e.SetID(uuid.New().String())
+	e.SetType(event.Type)
+	e.SetSource(event.Source)
+	e.SetTime(event.Timestamp)
+	_ = e.SetData(event.ContentType, event.Data)
+	return e
+}
+
+func createEventFromCloudEvent(event cloudevents.Event) CloudEvent {
+	return CloudEvent{
+		Type:        event.Type(),
+		Source:      event.Source(),
+		ContentType: event.DataContentType(),
+		Data:        event.Data(),
+		Timestamp:   event.Time(),
+	}
 }
