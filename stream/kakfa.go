@@ -174,6 +174,8 @@ func NewKafkaStream(config KafkaStreamConfig) (Stream, error) {
 	return kafkaStream, nil
 }
 
+// Send accepts an event, translates it to a CloudEvent and publishes it to the underlying Kafka stream,
+// returns an error (if any).
 func (ks *KafkaStream) Send(event CloudEvent) error {
 	//defer ks.sender.Close(context.Background())
 	client, err := cloudevents.NewClient(ks.sender, cloudevents.WithTimeNow(), cloudevents.WithUUIDs())
@@ -194,6 +196,9 @@ func (ks *KafkaStream) Send(event CloudEvent) error {
 	return nil
 }
 
+// Receive starts a kafka CloudEvents receiver for consuming messages from the kafka stream
+// accepts a channel that receives a connection close signal
+// returns a channel on which the received messages are pushed and an error (if any)
 func (ks *KafkaStream) Receive(close chan struct{}) (<-chan CloudEvent, error) {
 	events := make(chan CloudEvent)
 	client, err := cloudevents.NewClient(ks.receiver, cloudevents.WithTimeNow(), cloudevents.WithUUIDs())
