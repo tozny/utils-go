@@ -3,9 +3,11 @@ module github.com/tozny/utils-go
 require (
 	github.com/Shopify/sarama v1.27.2
 	github.com/aws/aws-sdk-go v1.19.8
+	github.com/cloudevents/sdk-go/protocol/kafka_sarama/v2 v2.10.0
+	github.com/cloudevents/sdk-go/v2 v2.10.0
 	github.com/go-pg/pg v8.0.3+incompatible
 	github.com/go-redis/redis v6.15.2+incompatible
-	github.com/google/uuid v1.1.0
+	github.com/google/uuid v1.1.1
 	github.com/jinzhu/inflection v1.0.0 // indirect
 	github.com/mailru/easyjson v0.0.0-20190626092158-b2ccc519800e // indirect
 	github.com/olivere/elastic v6.2.17+incompatible
