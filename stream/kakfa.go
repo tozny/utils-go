@@ -13,9 +13,9 @@ import (
 )
 
 const (
-	AnyPartitionPublishFlag = -1  // Value to use to signal Kafka client to publish messages to any partition
-	SubscribeBufferSize     = 256 // Max number of messages to buffer when subscribing to a stream
-	defaultReceiverGroupId  = "tozny-ce-"
+	AnyPartitionPublishFlag      = -1  // Value to use to signal Kafka client to publish messages to any partition
+	SubscribeBufferSize          = 256 // Max number of messages to buffer when subscribing to a stream
+	defaultReceiverGroupIdPrefix = "tozny-ce-"
 )
 
 // KafkaStreamConfig wraps configuration for a Kafka stream
@@ -31,13 +31,11 @@ type KafkaStreamConfig struct {
 // KafkaStream wraps a concrete (Apacha Kafka) distributed stream
 // processing backend for publishing and subscribing to events.
 type KafkaStream struct {
-	BrokerEndpoints []string             // List of broker endpoints used to publish and or subscribe to this Kafka stream
-	logger          logging.Logger       // Logger to use for stream trace logs
-	config          KafkaStreamConfig    // Private and static configuration for this Kafka stream
-	producer        sarama.SyncProducer  // Private Kafka client for synchronous publishing of messages to a Kafka stream
-	consumer        sarama.Consumer      // Private Kafka client for consuming messages from a Kafka stream
-	sender          *kafka_sarama.Sender // Private Kafka client for sending CloudEvents from a Kafka stream
-	//receiver        *kafka_sarama.Consumer // Private Kafka client for consuming CloudEvents from a Kafka stream
+	BrokerEndpoints []string            // List of broker endpoints used to publish and or subscribe to this Kafka stream
+	logger          logging.Logger      // Logger to use for stream trace logs
+	config          KafkaStreamConfig   // Private and static configuration for this Kafka stream
+	producer        sarama.SyncProducer // Private Kafka client for synchronous publishing of messages to a Kafka stream
+	consumer        sarama.Consumer     // Private Kafka client for consuming messages from a Kafka stream
 }
 
 func convertEventToMessage(event Event, partition int32) *sarama.ProducerMessage {
@@ -133,10 +131,7 @@ func (ks *KafkaStream) Subscribe(close chan struct{}) (<-chan Event, error) {
 func NewKafkaStream(config KafkaStreamConfig) (Stream, error) {
 	kafkaStream := &KafkaStream{}
 
-	kafkaConfig := sarama.NewConfig()
-	kafkaConfig.Producer.RequiredAcks = sarama.WaitForAll
-	kafkaConfig.Producer.Return.Successes = true
-	kafkaConfig.Producer.Partitioner = sarama.NewHashPartitioner
+	kafkaConfig := generateKafkaConfig()
 
 	kafkaProducer, err := sarama.NewSyncProducer(config.BrokerEndpoints, kafkaConfig)
 	if err != nil {
@@ -158,23 +153,20 @@ func NewKafkaStream(config KafkaStreamConfig) (Stream, error) {
 	kafkaStream.config = config
 	kafkaStream.logger = config.Logger
 
-	// Initialize a CloudEvents Sender Client and add it to the KafkaStream
-	sender, err := kafka_sarama.NewSenderFromSyncProducer(config.Topic, kafkaProducer)
-	if err != nil {
-		log.Fatalf("Failed to create sender: %s", err.Error())
-	}
-	kafkaStream.sender = sender
-
-	//kafkaStream.receiver = receiver
-
 	return kafkaStream, nil
 }
 
 // Send accepts an event, translates it to a CloudEvent and publishes it to the underlying Kafka stream,
 // returns an error (if any).
 func (ks *KafkaStream) Send(event CloudEvent) error {
+	// Initialize a CloudEvents Sender Client and add it to the KafkaStream
+	sender, err := kafka_sarama.NewSenderFromSyncProducer(ks.config.Topic, ks.producer)
+	if err != nil {
+		log.Fatalf("Failed to create sender: %s", err.Error())
+	}
+
 	//defer ks.sender.Close(context.Background())
-	client, err := cloudevents.NewClient(ks.sender, cloudevents.WithTimeNow(), cloudevents.WithUUIDs())
+	client, err := cloudevents.NewClient(sender, cloudevents.WithTimeNow(), cloudevents.WithUUIDs())
 	if err != nil {
 		log.Fatalf("Failed to create CloudEvents client, %v", err)
 		return err
@@ -196,13 +188,9 @@ func (ks *KafkaStream) Send(event CloudEvent) error {
 // accepts a channel that receives a connection close signal
 // returns a channel on which the received messages are pushed and an error (if any)
 func (ks *KafkaStream) Receive(close chan struct{}) (<-chan CloudEvent, error) {
-	kafkaConfig := sarama.NewConfig()
-	kafkaConfig.Producer.RequiredAcks = sarama.WaitForAll
-	kafkaConfig.Producer.Return.Successes = true
-	kafkaConfig.Producer.Partitioner = sarama.NewHashPartitioner
-
+	kafkaConfig := generateKafkaConfig()
 	receiver, err := kafka_sarama.NewConsumer(ks.config.BrokerEndpoints, kafkaConfig,
-		defaultReceiverGroupId+ks.config.Topic, ks.config.Topic)
+		defaultReceiverGroupIdPrefix+ks.config.Topic, ks.config.Topic)
 	if err != nil {
 		log.Fatalf("Failed to create receiver: %s", err.Error())
 	}
@@ -256,4 +244,12 @@ func createEventFromCloudEvent(event cloudevents.Event) CloudEvent {
 		Data:        event.Data(),
 		Timestamp:   event.Time(),
 	}
+}
+
+func generateKafkaConfig() *sarama.Config {
+	kafkaConfig := sarama.NewConfig()
+	kafkaConfig.Producer.RequiredAcks = sarama.WaitForAll
+	kafkaConfig.Producer.Return.Successes = true
+	kafkaConfig.Producer.Partitioner = sarama.NewHashPartitioner
+	return kafkaConfig
 }
