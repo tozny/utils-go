@@ -15,7 +15,7 @@ import (
 const (
 	AnyPartitionPublishFlag = -1  // Value to use to signal Kafka client to publish messages to any partition
 	SubscribeBufferSize     = 256 // Max number of messages to buffer when subscribing to a stream
-	defaultReceiverGroupId  = "tozny-cloudevents"
+	defaultReceiverGroupId  = "tozny-ce-"
 )
 
 // KafkaStreamConfig wraps configuration for a Kafka stream
@@ -201,7 +201,8 @@ func (ks *KafkaStream) Receive(close chan struct{}) (<-chan CloudEvent, error) {
 	kafkaConfig.Producer.Return.Successes = true
 	kafkaConfig.Producer.Partitioner = sarama.NewHashPartitioner
 
-	receiver, err := kafka_sarama.NewConsumer(ks.config.BrokerEndpoints, kafkaConfig, defaultReceiverGroupId, ks.config.Topic)
+	receiver, err := kafka_sarama.NewConsumer(ks.config.BrokerEndpoints, kafkaConfig,
+		defaultReceiverGroupId+ks.config.Topic, ks.config.Topic)
 	if err != nil {
 		log.Fatalf("Failed to create receiver: %s", err.Error())
 	}
