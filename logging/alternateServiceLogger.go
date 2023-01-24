@@ -56,12 +56,32 @@ func NewZapSugaredServiceLogger(lc AltServiceLoggerConfig) AltServiceLogger {
 	if err != nil {
 		panic(fmt.Errorf("Logger could not be built. This is not an expected outcome. ERR: %+v", err))
 	}
+
+	enc := NewSyslogEncoder(SyslogEncoderConfig{
+		EncoderConfig: zapcore.EncoderConfig{
+			NameKey:        "logger",
+			CallerKey:      "caller",
+			MessageKey:     "msg",
+			StacktraceKey:  "stacktrace",
+			EncodeLevel:    zapcore.LowercaseLevelEncoder,
+			EncodeTime:     zapcore.EpochTimeEncoder,
+			EncodeDuration: zapcore.SecondsDurationEncoder,
+			//EncodeCaller:   zapcore.ShortCallerEncoder,
+		},
+
+		Facility:  LOG_LOCAL0,
+		Hostname:  "localhost",
+		PID:       os.Getpid(),
+		App:       lc.ServiceName,
+		Formatter: lc.Output,
+	})
+
 	if lc.ConsoleLog {
 		config.EncoderConfig.StacktraceKey = ""
 		zapLogger = zapLogger.WithOptions(
 			zap.WrapCore(
 				func(zapcore.Core) zapcore.Core {
-					return zapcore.NewCore(zapcore.NewConsoleEncoder(config.EncoderConfig), zapcore.AddSync(os.Stderr), config.Level)
+					return zapcore.NewCore(enc, zapcore.AddSync(os.Stderr), config.Level)
 				}))
 	}
 	sugaredZapLogger = zapLogger.Sugar().Named(lc.ServiceName)
@@ -76,12 +96,11 @@ func NewZapSugaredServiceLogger(lc AltServiceLoggerConfig) AltServiceLogger {
 
 // SetLevel allows the log level of the ServiceLogger to be updated based on
 // supported log level strings. These include in order:
-// 	- "CRITICAL"
-// 	- "ERROR"
-// 	- "WARN"
-// 	- "INFO"
-// 	- "DEBUG"
-//
+//   - "CRITICAL"
+//   - "ERROR"
+//   - "WARN"
+//   - "INFO"
+//   - "DEBUG"
 func (sl *AltServiceLogger) SetLevel(level string) {
 	zapLevel, exists := zapLevelMap[level]
 	if !exists {
