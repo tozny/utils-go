@@ -5,7 +5,9 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"strings"
 
+	"github.com/tozny/utils-go"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 )
@@ -34,15 +36,13 @@ func NewServiceLogger(out io.Writer, serviceName string, level string) ServiceLo
 	config.EncoderConfig.EncodeLevel = zapcore.CapitalLevelEncoder
 	config.EncoderConfig.EncodeTime = zapcore.ISO8601TimeEncoder
 
-	zapLogger, err := config.Build(zap.AddCallerSkip(1))
+	zapLogger, err := config.Build(zap.WithCaller(false))
 	if err != nil {
 		panic(fmt.Errorf("Logger could not be built. This is not an expected outcome. ERR: %+v", err))
 	}
-
+	var loggingFormat = utils.MustGetenv("LOGGING_FORMAT")
 	var enc zapcore.Encoder
-	var format = "syslog"
-	if format == "syslog" {
-
+	if strings.EqualFold("Syslog", loggingFormat) {
 		enc = NewSyslogEncoder(SyslogEncoderConfig{
 			EncoderConfig: zapcore.EncoderConfig{
 				NameKey:        "logger",
