@@ -103,9 +103,9 @@ var (
 	}
 )
 
-var loggingFormat = utils.MustGetenv("LOGGING_FORMAT")
+var loggingFormat = utils.GetLogEnv("LOGGING_FORMAT", "DEFAULT")
 var Facility = FacilityPriority(utils.MustGetenv("FACILITY_VALUE"))
-var hostName = utils.MustGetenv("HostName")
+var hostName = utils.GetLogEnv("HostName", "")
 
 type Framing int
 
