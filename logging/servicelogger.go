@@ -7,7 +7,6 @@ import (
 	"os"
 	"strings"
 
-	"github.com/tozny/utils-go"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 )
@@ -40,7 +39,7 @@ func NewServiceLogger(out io.Writer, serviceName string, level string) ServiceLo
 	if err != nil {
 		panic(fmt.Errorf("Logger could not be built. This is not an expected outcome. ERR: %+v", err))
 	}
-	var loggingFormat = utils.MustGetenv("LOGGING_FORMAT")
+
 	var enc zapcore.Encoder
 	if strings.EqualFold("Syslog", loggingFormat) {
 		enc = NewSyslogEncoder(SyslogEncoderConfig{
@@ -55,8 +54,8 @@ func NewServiceLogger(out io.Writer, serviceName string, level string) ServiceLo
 				//EncodeCaller:   zapcore.ShortCallerEncoder,
 			},
 
-			Facility:  LOG_LOCAL0,
-			Hostname:  "localhost",
+			Facility:  Facility,
+			Hostname:  hostName, //if no value passed it set from os.getHostName
 			PID:       os.Getpid(),
 			App:       serviceName,
 			Formatter: "stdout",

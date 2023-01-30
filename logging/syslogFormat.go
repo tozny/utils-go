@@ -1,12 +1,12 @@
 package logging
 
 import (
-	"fmt"
 	"os"
 	"path"
 	"strings"
 	"time"
 
+	"github.com/tozny/utils-go"
 	"go.uber.org/zap"
 	"go.uber.org/zap/buffer"
 	"go.uber.org/zap/zapcore"
@@ -103,6 +103,10 @@ var (
 	}
 )
 
+var loggingFormat = utils.MustGetenv("LOGGING_FORMAT")
+var Facility = FacilityPriority(utils.MustGetenv("FACILITY_VALUE"))
+var hostName = utils.MustGetenv("HostName")
+
 type Framing int
 
 type genericEncoder interface {
@@ -129,12 +133,12 @@ type syslogEncoder struct {
 
 // FacilityPriority converts a facility string into
 // an appropriate priority level or returns an error
-func FacilityPriority(facility string) (Priority, error) {
+func FacilityPriority(facility string) Priority {
 	facility = strings.ToUpper(facility)
 	if prio, ok := facilityMap[facility]; ok {
-		return prio, nil
+		return prio
 	}
-	return 0, fmt.Errorf("invalid syslog facility: %s", facility)
+	return 0
 }
 
 func rfc5424CompliantASCIIMapper(r rune) rune {
