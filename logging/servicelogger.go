@@ -40,9 +40,9 @@ func NewServiceLogger(out io.Writer, serviceName string, level string) ServiceLo
 		panic(fmt.Errorf("Logger could not be built. This is not an expected outcome. ERR: %+v", err))
 	}
 
-	var enc zapcore.Encoder
+	var encoder zapcore.Encoder
 	if strings.EqualFold("Syslog", loggingFormat) {
-		enc = NewSyslogEncoder(SyslogEncoderConfig{
+		encoder = NewSyslogEncoder(SyslogEncoderConfig{
 			EncoderConfig: zapcore.EncoderConfig{
 				NameKey:        "logger",
 				CallerKey:      "caller",
@@ -61,7 +61,7 @@ func NewServiceLogger(out io.Writer, serviceName string, level string) ServiceLo
 			Formatter: "stdout",
 		})
 	} else {
-		enc = zapcore.NewConsoleEncoder(config.EncoderConfig)
+		encoder = zapcore.NewConsoleEncoder(config.EncoderConfig)
 	}
 
 	//if lc.ConsoleLog {
@@ -69,7 +69,7 @@ func NewServiceLogger(out io.Writer, serviceName string, level string) ServiceLo
 	zapLogger = zapLogger.WithOptions(
 		zap.WrapCore(
 			func(zapcore.Core) zapcore.Core {
-				return zapcore.NewCore(enc, zapcore.AddSync(os.Stderr), config.Level)
+				return zapcore.NewCore(encoder, zapcore.AddSync(os.Stderr), config.Level)
 			}))
 
 	sugaredZapLogger = zapLogger.Sugar()
