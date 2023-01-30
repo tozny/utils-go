@@ -3,6 +3,7 @@ package logging
 import (
 	"os"
 	"path"
+	"strconv"
 	"strings"
 	"time"
 
@@ -25,7 +26,6 @@ var (
 type Priority int
 
 const (
-	version         = 1
 	severityMask    = 0x07
 	facilityMask    = 0xf8
 	nilValue        = "-"
@@ -102,7 +102,8 @@ var (
 		"LOCAL7":   LOG_LOCAL7,
 	}
 )
-
+var Sversion = utils.GetLogEnv("SYSLOG_VERSION", "1")
+var version, err = strconv.ParseInt(Sversion, 10, 64)
 var loggingFormat = utils.GetLogEnv("LOGGING_FORMAT", "DEFAULT")
 var Facility = FacilityPriority(utils.MustGetenv("FACILITY_VALUE"))
 var hostName = utils.GetLogEnv("HostName", "")
