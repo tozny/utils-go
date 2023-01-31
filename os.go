@@ -16,7 +16,8 @@ func MustGetenv(env string) string {
 }
 
 // TransitiveMustGetenv will (if a transitive dependnecy such as the value of another environment is set)
-//  attempt to lookup the specified environment variable and return its string panicing if not provided
+//
+//	attempt to lookup the specified environment variable and return its string panicing if not provided
 func TransitiveMustGetenv(env string, active bool) string {
 	if !active {
 		return ""
@@ -25,7 +26,7 @@ func TransitiveMustGetenv(env string, active bool) string {
 }
 
 // MustGetenvInt attempts to lookup and return the value associated with the specified environment variable identifier and cast it to an int,
-//panic'ing if no value is associated with that identifier or it cannot be cast
+// panic'ing if no value is associated with that identifier or it cannot be cast
 func MustGetenvInt(env string) int {
 	value := MustGetenv(env)
 	intVal, err := strconv.Atoi(value)
@@ -45,7 +46,7 @@ func TransitiveMustGetenvInt(env string, active bool) int {
 }
 
 // MustGetenvIntNonZero attempts to lookup and return the value associated with the specified environment variable identifier and cast it to an int,
-//panic'ing if no value is associated with that identifier, if it cannot be cast, or if once cast equals zero
+// panic'ing if no value is associated with that identifier, if it cannot be cast, or if once cast equals zero
 func MustGetenvIntNonZero(env string) int {
 	value := MustGetenvInt(env)
 	if value == 0 {
@@ -55,7 +56,7 @@ func MustGetenvIntNonZero(env string) int {
 }
 
 // MustGetenvFloat attempts to lookup and return the value associated with the specified environment variable identifier and cast it to a float,
-//panic'ing if no value is associated with that identifier or it cannot be cast
+// panic'ing if no value is associated with that identifier or it cannot be cast
 func MustGetenvFloat(env string) float64 {
 	value := MustGetenv(env)
 	floatVal, err := strconv.ParseFloat(value, 64)
@@ -75,7 +76,7 @@ func TransitiveMustGetenvFloat(env string, active bool) float64 {
 }
 
 // MustGetenvFloatNonZero attempts to lookup and return the value associated with the specified environment variable identifier and cast it to a float,
-//panic'ing if no value is associated with that identifier, if it cannot be cast, or if once cast equals zero
+// panic'ing if no value is associated with that identifier, if it cannot be cast, or if once cast equals zero
 func MustGetenvFloatNonZero(env string) float64 {
 	value := MustGetenvFloat(env)
 	if value == 0 {

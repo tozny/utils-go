@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"strings"
 
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
@@ -52,16 +53,45 @@ func NewZapSugaredServiceLogger(lc AltServiceLoggerConfig) AltServiceLogger {
 	config.EncoderConfig.EncodeLevel = zapcore.CapitalLevelEncoder
 	config.EncoderConfig.EncodeTime = zapcore.ISO8601TimeEncoder
 
-	zapLogger, err := config.Build(zap.AddCallerSkip(lc.SkipLevels))
+	var withCaller bool = true
+	if lc.SkipLevels == 1 {
+		withCaller = false
+	}
+	zapLogger, err := config.Build(zap.WithCaller(withCaller))
 	if err != nil {
 		panic(fmt.Errorf("Logger could not be built. This is not an expected outcome. ERR: %+v", err))
 	}
+
+	var encoder zapcore.Encoder
+	if strings.EqualFold("Syslog", loggingFormat) {
+		encoder = NewSyslogEncoder(SyslogEncoderConfig{
+			EncoderConfig: zapcore.EncoderConfig{
+				NameKey:        "logger",
+				CallerKey:      "caller",
+				MessageKey:     "msg",
+				StacktraceKey:  "stacktrace",
+				EncodeLevel:    zapcore.LowercaseLevelEncoder,
+				EncodeTime:     zapcore.EpochTimeEncoder,
+				EncodeDuration: zapcore.SecondsDurationEncoder,
+				//EncodeCaller:   zapcore.ShortCallerEncoder,
+			},
+
+			Facility:  Facility,
+			Hostname:  hostName,
+			PID:       os.Getpid(),
+			App:       lc.ServiceName,
+			Formatter: lc.Output,
+		})
+	} else {
+		encoder = zapcore.NewConsoleEncoder(config.EncoderConfig)
+	}
+
 	if lc.ConsoleLog {
 		config.EncoderConfig.StacktraceKey = ""
 		zapLogger = zapLogger.WithOptions(
 			zap.WrapCore(
 				func(zapcore.Core) zapcore.Core {
-					return zapcore.NewCore(zapcore.NewConsoleEncoder(config.EncoderConfig), zapcore.AddSync(os.Stderr), config.Level)
+					return zapcore.NewCore(encoder, zapcore.AddSync(os.Stderr), config.Level)
 				}))
 	}
 	sugaredZapLogger = zapLogger.Sugar().Named(lc.ServiceName)
@@ -76,12 +106,11 @@ func NewZapSugaredServiceLogger(lc AltServiceLoggerConfig) AltServiceLogger {
 
 // SetLevel allows the log level of the ServiceLogger to be updated based on
 // supported log level strings. These include in order:
-// 	- "CRITICAL"
-// 	- "ERROR"
-// 	- "WARN"
-// 	- "INFO"
-// 	- "DEBUG"
-//
+//   - "CRITICAL"
+//   - "ERROR"
+//   - "WARN"
+//   - "INFO"
+//   - "DEBUG"
 func (sl *AltServiceLogger) SetLevel(level string) {
 	zapLevel, exists := zapLevelMap[level]
 	if !exists {
