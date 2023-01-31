@@ -15,15 +15,6 @@ func MustGetenv(env string) string {
 	return value
 }
 
-// Lookup for Logging related Environment, if none of them , set with default value
-func GetLogEnv(env string, defaultValue string) string {
-	value, ok := os.LookupEnv(env)
-	if !ok {
-		value = defaultValue
-	}
-	return value
-}
-
 // TransitiveMustGetenv will (if a transitive dependnecy such as the value of another environment is set)
 //
 //	attempt to lookup the specified environment variable and return its string panicing if not provided

@@ -102,11 +102,11 @@ var (
 		"LOCAL7":   LOG_LOCAL7,
 	}
 )
-var Sversion = utils.GetLogEnv("SYSLOG_VERSION", "1")
+var Sversion = utils.EnvOrDefault("SYSLOG_VERSION", "1")
 var version, err = strconv.ParseInt(Sversion, 10, 64)
-var loggingFormat = utils.GetLogEnv("LOGGING_FORMAT", "DEFAULT")
+var loggingFormat = utils.EnvOrDefault("LOGGING_FORMAT", "DEFAULT")
 var Facility = FacilityPriority(utils.MustGetenv("FACILITY_VALUE"))
-var hostName = utils.GetLogEnv("HostName", "")
+var hostName = utils.EnvOrDefault("HostName", "")
 
 type Framing int
 
