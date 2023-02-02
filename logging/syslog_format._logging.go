@@ -29,7 +29,7 @@ const (
 	severityMask    = 0x07
 	facilityMask    = 0xf8
 	nilValue        = "-"
-	timestampFormat = "2006-01-02T15:04:05-07:00"
+	timestampFormat = "2006-01-02T15:04:05.000Z"
 	maxHostnameLen  = 255
 	maxAppNameLen   = 48
 
@@ -105,14 +105,22 @@ var (
 var Sversion = utils.EnvOrDefault("SYSLOG_VERSION", "1")
 var version, err = strconv.ParseInt(Sversion, 10, 64)
 var loggingFormat = utils.EnvOrDefault("LOGGING_FORMAT", "DEFAULT")
-var Facility = FacilityPriority(utils.MustGetenv("FACILITY_VALUE"))
-var hostName = utils.EnvOrDefault("HostName", "")
+var Facility = FacilityPriority(utils.EnvOrDefault("FACILITY_VALUE", "LOCAL0"))
+var hostName = utils.EnvOrDefault("HOSTNAME", "")
 
 type Framing int
 
 type genericEncoder interface {
 	zapcore.Encoder
 	zapcore.ArrayEncoder
+}
+
+func CustomLevelEncoder(level zapcore.Level, enc zapcore.PrimitiveArrayEncoder) {
+	enc.AppendString("[" + level.String() + "] :")
+}
+
+func SyslogTimeEncoder(t time.Time, enc zapcore.PrimitiveArrayEncoder) {
+	enc.AppendString(t.Format(timestampFormat)) //"2006-01-02T15:04:05.000Z"))
 }
 
 // SyslogEncoderConfig allows users to configure the concrete encoders for zap syslog.

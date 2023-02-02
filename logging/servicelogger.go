@@ -32,8 +32,8 @@ func NewServiceLogger(out io.Writer, serviceName string, level string) ServiceLo
 
 	initialFields["facility"] = "user-level"
 	config.InitialFields = initialFields
-	config.EncoderConfig.EncodeLevel = zapcore.CapitalLevelEncoder
-	config.EncoderConfig.EncodeTime = zapcore.ISO8601TimeEncoder
+	config.EncoderConfig.EncodeLevel = CustomLevelEncoder
+	config.EncoderConfig.EncodeTime = SyslogTimeEncoder
 
 	zapLogger, err := config.Build(zap.WithCaller(false))
 	if err != nil {
@@ -72,7 +72,13 @@ func NewServiceLogger(out io.Writer, serviceName string, level string) ServiceLo
 				return zapcore.NewCore(encoder, zapcore.AddSync(os.Stderr), config.Level)
 			}))
 
-	sugaredZapLogger = zapLogger.Sugar()
+	if strings.EqualFold("Default", loggingFormat) {
+		sugaredZapLogger = zapLogger.Sugar().Named(serviceName)
+	} else if strings.EqualFold("Pretty", loggingFormat) {
+		sugaredZapLogger = zapLogger.Sugar()
+	} else {
+		sugaredZapLogger = zapLogger.Sugar()
+	}
 	sugaredZapLogger.Desugar().With()
 	logger := ServiceLogger{
 		logConfig:     &config,
