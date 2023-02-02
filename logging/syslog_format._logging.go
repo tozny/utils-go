@@ -105,8 +105,8 @@ var (
 var Sversion = utils.EnvOrDefault("SYSLOG_VERSION", "1")
 var version, err = strconv.ParseInt(Sversion, 10, 64)
 var loggingFormat = utils.EnvOrDefault("LOGGING_FORMAT", "DEFAULT")
-var Facility = FacilityPriority(utils.MustGetenv("FACILITY_VALUE"))
-var hostName = utils.EnvOrDefault("HostName", "")
+var Facility = FacilityPriority(utils.EnvOrDefault("FACILITY_VALUE", "LOCAL0"))
+var hostName = utils.EnvOrDefault("HOSTNAME", "")
 
 type Framing int
 
