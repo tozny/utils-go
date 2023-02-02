@@ -50,8 +50,8 @@ func NewZapSugaredServiceLogger(lc AltServiceLoggerConfig) AltServiceLogger {
 	}
 	lc.InitialFields["facility"] = "user-level"
 	config.InitialFields = lc.InitialFields
-	config.EncoderConfig.EncodeLevel = zapcore.CapitalLevelEncoder
-	config.EncoderConfig.EncodeTime = zapcore.ISO8601TimeEncoder
+	config.EncoderConfig.EncodeLevel = CustomLevelEncoder
+	config.EncoderConfig.EncodeTime = SyslogTimeEncoder
 
 	var withCaller bool = true
 	if lc.SkipLevels == 1 {
@@ -94,7 +94,13 @@ func NewZapSugaredServiceLogger(lc AltServiceLoggerConfig) AltServiceLogger {
 					return zapcore.NewCore(encoder, zapcore.AddSync(os.Stderr), config.Level)
 				}))
 	}
-	sugaredZapLogger = zapLogger.Sugar().Named(lc.ServiceName)
+	if strings.EqualFold("Default", loggingFormat) {
+		sugaredZapLogger = zapLogger.Sugar().Named(lc.ServiceName) // timestamp level servicename message
+	} else if strings.EqualFold("Pretty", loggingFormat) {
+		sugaredZapLogger = zapLogger.Sugar() // timestamp level message
+	} else {
+		sugaredZapLogger = zapLogger.Sugar() //syslog format
+	}
 	sugaredZapLogger.Desugar().With()
 	logger := AltServiceLogger{
 		logConfig:     &config,
