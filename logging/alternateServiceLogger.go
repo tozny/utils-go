@@ -69,11 +69,10 @@ func NewZapSugaredServiceLogger(lc AltServiceLoggerConfig) AltServiceLogger {
 				NameKey:        "logger",
 				CallerKey:      "caller",
 				MessageKey:     "msg",
-				StacktraceKey:  "stacktrace",
 				EncodeLevel:    zapcore.LowercaseLevelEncoder,
 				EncodeTime:     zapcore.EpochTimeEncoder,
 				EncodeDuration: zapcore.SecondsDurationEncoder,
-				//EncodeCaller:   zapcore.ShortCallerEncoder,
+				EncodeCaller:   zapcore.ShortCallerEncoder,
 			},
 
 			Facility:  Facility,
@@ -83,11 +82,11 @@ func NewZapSugaredServiceLogger(lc AltServiceLoggerConfig) AltServiceLogger {
 			Formatter: lc.Output,
 		})
 	} else {
+		config.EncoderConfig.StacktraceKey = ""
 		encoder = zapcore.NewConsoleEncoder(config.EncoderConfig)
 	}
 
 	if lc.ConsoleLog {
-		config.EncoderConfig.StacktraceKey = ""
 		zapLogger = zapLogger.WithOptions(
 			zap.WrapCore(
 				func(zapcore.Core) zapcore.Core {
