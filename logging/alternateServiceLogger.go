@@ -53,11 +53,7 @@ func NewZapSugaredServiceLogger(lc AltServiceLoggerConfig) AltServiceLogger {
 	config.EncoderConfig.EncodeLevel = CustomLevelEncoder
 	config.EncoderConfig.EncodeTime = SyslogTimeEncoder
 
-	var withCaller bool = true
-	if lc.SkipLevels == 1 {
-		withCaller = false
-	}
-	zapLogger, err := config.Build(zap.WithCaller(withCaller))
+	zapLogger, err := config.Build(zap.AddCallerSkip(lc.SkipLevels))
 	if err != nil {
 		panic(fmt.Errorf("Logger could not be built. This is not an expected outcome. ERR: %+v", err))
 	}
@@ -69,11 +65,10 @@ func NewZapSugaredServiceLogger(lc AltServiceLoggerConfig) AltServiceLogger {
 				NameKey:        "logger",
 				CallerKey:      "caller",
 				MessageKey:     "msg",
-				StacktraceKey:  "stacktrace",
 				EncodeLevel:    zapcore.LowercaseLevelEncoder,
 				EncodeTime:     zapcore.EpochTimeEncoder,
 				EncodeDuration: zapcore.SecondsDurationEncoder,
-				//EncodeCaller:   zapcore.ShortCallerEncoder,
+				EncodeCaller:   zapcore.ShortCallerEncoder,
 			},
 
 			Facility:  Facility,
@@ -83,23 +78,21 @@ func NewZapSugaredServiceLogger(lc AltServiceLoggerConfig) AltServiceLogger {
 			Formatter: lc.Output,
 		})
 	} else {
+		config.EncoderConfig.StacktraceKey = ""
 		encoder = zapcore.NewConsoleEncoder(config.EncoderConfig)
 	}
 
 	if lc.ConsoleLog {
-		config.EncoderConfig.StacktraceKey = ""
 		zapLogger = zapLogger.WithOptions(
 			zap.WrapCore(
 				func(zapcore.Core) zapcore.Core {
 					return zapcore.NewCore(encoder, zapcore.AddSync(os.Stderr), config.Level)
 				}))
 	}
-	if strings.EqualFold("Default", loggingFormat) {
-		sugaredZapLogger = zapLogger.Sugar().Named(lc.ServiceName) // timestamp level servicename message
-	} else if strings.EqualFold("Pretty", loggingFormat) {
-		sugaredZapLogger = zapLogger.Sugar() // timestamp level message
+	if strings.EqualFold("Pretty", loggingFormat) || strings.EqualFold("Syslog", loggingFormat) {
+		sugaredZapLogger = zapLogger.Sugar()
 	} else {
-		sugaredZapLogger = zapLogger.Sugar() //syslog format
+		sugaredZapLogger = zapLogger.Sugar().Named(lc.ServiceName)
 	}
 	sugaredZapLogger.Desugar().With()
 	logger := AltServiceLogger{

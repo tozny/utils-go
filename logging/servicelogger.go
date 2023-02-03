@@ -35,7 +35,7 @@ func NewServiceLogger(out io.Writer, serviceName string, level string) ServiceLo
 	config.EncoderConfig.EncodeLevel = CustomLevelEncoder
 	config.EncoderConfig.EncodeTime = SyslogTimeEncoder
 
-	zapLogger, err := config.Build(zap.WithCaller(false))
+	zapLogger, err := config.Build(zap.AddCallerSkip(1))
 	if err != nil {
 		panic(fmt.Errorf("Logger could not be built. This is not an expected outcome. ERR: %+v", err))
 	}
@@ -47,11 +47,10 @@ func NewServiceLogger(out io.Writer, serviceName string, level string) ServiceLo
 				NameKey:        "logger",
 				CallerKey:      "caller",
 				MessageKey:     "msg",
-				StacktraceKey:  "stacktrace",
 				EncodeLevel:    zapcore.LowercaseLevelEncoder,
 				EncodeTime:     zapcore.EpochTimeEncoder,
 				EncodeDuration: zapcore.SecondsDurationEncoder,
-				//EncodeCaller:   zapcore.ShortCallerEncoder,
+				EncodeCaller:   zapcore.ShortCallerEncoder,
 			},
 
 			Facility:  Facility,
@@ -61,11 +60,11 @@ func NewServiceLogger(out io.Writer, serviceName string, level string) ServiceLo
 			Formatter: "stdout",
 		})
 	} else {
+		config.EncoderConfig.StacktraceKey = ""
 		encoder = zapcore.NewConsoleEncoder(config.EncoderConfig)
 	}
 
 	//if lc.ConsoleLog {
-	config.EncoderConfig.StacktraceKey = ""
 	zapLogger = zapLogger.WithOptions(
 		zap.WrapCore(
 			func(zapcore.Core) zapcore.Core {
