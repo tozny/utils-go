@@ -64,13 +64,19 @@ func NewServiceLogger(out io.Writer, serviceName string, level string) ServiceLo
 		encoder = zapcore.NewConsoleEncoder(config.EncoderConfig)
 	}
 
-	//if lc.ConsoleLog {
-	zapLogger = zapLogger.WithOptions(
-		zap.WrapCore(
-			func(zapcore.Core) zapcore.Core {
-				return zapcore.NewCore(encoder, zapcore.AddSync(os.Stderr), config.Level)
-			}))
-
+	if out == os.Stdout {
+		zapLogger = zapLogger.WithOptions(
+			zap.WrapCore(
+				func(zapcore.Core) zapcore.Core {
+					return zapcore.NewCore(encoder, zapcore.AddSync(os.Stderr), config.Level)
+				}))
+	} else {
+		zapLogger = zapLogger.WithOptions(
+			zap.WrapCore(
+				func(zapcore.Core) zapcore.Core {
+					return zapcore.NewCore(encoder, zap.CombineWriteSyncers(os.Stderr, zapcore.AddSync(out)), config.Level)
+				}))
+	}
 	if strings.EqualFold("Default", loggingFormat) {
 		sugaredZapLogger = zapLogger.Sugar().Named(serviceName)
 	} else if strings.EqualFold("Pretty", loggingFormat) {
