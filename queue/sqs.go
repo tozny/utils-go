@@ -1,13 +1,14 @@
 package queue
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"strconv"
 
+	"github.com/aws/aws-sdk-go-v2/config"
+	"github.com/aws/aws-sdk-go-v2/credentials"
 	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/credentials"
-	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/sqs"
 	"github.com/aws/aws-sdk-go/service/sqs/sqsiface"
 	"github.com/google/uuid"
@@ -203,39 +204,44 @@ func convertTagsToSQSMessageAttributes(tags map[string]string) map[string]*sqs.M
 
 // New idempotently create a SQS queue using the provided configuration,
 // returning a queue interface wrapping the sqs queue connection and error (if any).
-func NewSQSQueue(config SQSQueueConfig) (Queue, error) {
+func NewSQSQueue(configs SQSQueueConfig) (Queue, error) {
 	var sqsQueue *SQSQueue
 	// Configure aws session object for fetching sqs client AWS API credentials
 	// https://docs.aws.amazon.com/sdk-for-go/v1/developer-guide/configuring-sdk.html
-	awsConfig := aws.Config{
-		Region: aws.String(config.SQSRegion),
-		Credentials: credentials.NewStaticCredentials(
-			config.APIKeyID,
-			config.APIKeySecret,
-			"" /*AWS_SESSION_TOKEN*/),
-		Endpoint: aws.String(config.SQSEndpoint),
-	}
-	awsSession, err := session.NewSession(&awsConfig)
+	// awsConfig := aws.Config{
+	// 	Region: aws.String(configs.SQSRegion),
+	// 	Credentials: credentials.NewStaticCredentials(
+	// 		configs.APIKeyID,
+	// 		configs.APIKeySecret,
+	// 		"" /*AWS_SESSION_TOKEN*/),
+	// 	Endpoint: aws.String(configs.SQSEndpoint),
+	// }
+	// awsSession, err := session.NewSession(&awsConfig)
+	staticProvider := credentials.NewStaticCredentialsProvider(
+		configs.APIKeyID,
+		configs.APIKeySecret,
+		"" /*AWS_SESSION_TOKEN*/)
+	cfg, err := config.LoadDefaultConfig(context.TODO(), config.WithRegion(configs.SQSRegion), config.WithCredentialsProvider(staticProvider))
 	if err != nil {
 		return sqsQueue, err
 	}
-	sqsClient := sqs.New(awsSession)
+	sqsClient := sqs.New(cfg)
 	// Create the queue using params from config
 	createQueueResponse, err := sqsClient.CreateQueue(
 		&sqs.CreateQueueInput{
-			QueueName: aws.String(config.QueueName),
+			QueueName: aws.String(configs.QueueName),
 		})
 	if err != nil {
 		return sqsQueue, err
 	}
 	sqsQueue = &SQSQueue{
-		Name:                     config.QueueName,
+		Name:                     configs.QueueName,
 		url:                      *createQueueResponse.QueueUrl,
 		sqsClient:                sqsClient,
-		visibilityTimeoutSeconds: config.VisibilityTimeoutSeconds,
-		dequeueBatchSize:         config.DequeueBatchSize,
-		pollSeconds:              config.PollSeconds,
-		logger:                   config.Logger,
+		visibilityTimeoutSeconds: configs.VisibilityTimeoutSeconds,
+		dequeueBatchSize:         configs.DequeueBatchSize,
+		pollSeconds:              configs.PollSeconds,
+		logger:                   configs.Logger,
 	}
 	return sqsQueue, err
 }

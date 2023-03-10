@@ -5,9 +5,10 @@ import (
 	"fmt"
 	"net/url"
 
-	"github.com/aws/aws-sdk-go/aws/credentials"
+	"github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/aws/aws-sdk-go-v2/credentials"
 	"github.com/olivere/elastic"
-	aws "github.com/olivere/elastic/aws/v4"
+	awsElastic "github.com/olivere/elastic/aws/v4"
 	"github.com/tozny/utils-go/logging"
 )
 
@@ -95,11 +96,18 @@ func NewElasticClient(config ElasticConfig) (ElasticClient, error) {
 		client, err = elastic.NewSimpleClient(
 			elastic.SetURL(config.URL))
 	} else {
-		signingClient := aws.NewV4SigningClient(credentials.NewStaticCredentials(
-			config.AccessKey,
+		appCreds := aws.NewCredentialsCache(credentials.NewStaticCredentialsProvider(config.AccessKey,
 			config.SecretKey,
-			"",
-		), config.Region)
+			""))
+		value, err := appCreds.Retrieve(context.TODO())
+		if err != nil {
+			return ElasticClient{
+				client,
+				config.Logger,
+			}, err
+
+		}
+		signingClient := awsElastic.NewV4SigningClient(value, config.Region)
 		client, err = elastic.NewClient(
 			elastic.SetURL(config.URL),
 			elastic.SetScheme("https"),
