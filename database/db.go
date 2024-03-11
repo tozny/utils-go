@@ -25,6 +25,53 @@ type DBConfig struct {
 	EnableLogging bool
 	EnableTLS     bool
 	SkipVerifyTLS bool
+	// Maximum number of retries before giving up.
+	// Default is to not retry failed queries.
+	MaxRetries int
+	// Whether to retry queries cancelled because of statement_timeout.
+	RetryStatementTimeout bool
+	// Minimum backoff between each retry.
+	// Default is 250 milliseconds; -1 disables backoff.
+	MinRetryBackoff time.Duration
+	// Maximum backoff between each retry.
+	// Default is 4 seconds; -1 disables backoff.
+	MaxRetryBackoff time.Duration
+
+	// Dial timeout for establishing new connections.
+	// Default is 5 seconds.
+	DialTimeout time.Duration
+
+	// Timeout for socket reads. If reached, commands will fail
+	// with a timeout instead of blocking.
+	ReadTimeout time.Duration
+	// Timeout for socket writes. If reached, commands will fail
+	// with a timeout instead of blocking.
+	WriteTimeout time.Duration
+
+	// Maximum number of socket connections.
+	// Default is 10 connections per every CPU as reported by runtime.NumCPU.
+	PoolSize int
+	// Minimum number of idle connections which is useful when establishing
+	// new connection is slow.
+	MinIdleConns int
+	// Connection age at which client retires (closes) the connection.
+	// It is useful with proxies like PgBouncer and HAProxy.
+	// Default is to not close aged connections.
+	MaxConnAge time.Duration
+	// Time for which client waits for free connection if all
+	// connections are busy before returning an error.
+	// Default is 30 seconds if ReadTimeOut is not defined, otherwise,
+	// ReadTimeout + 1 second.
+	PoolTimeout time.Duration
+	// Amount of time after which client closes idle connections.
+	// Should be less than server's timeout.
+	// Default is 5 minutes. -1 disables idle timeout check.
+	IdleTimeout time.Duration
+	// Frequency of idle checks made by idle connections reaper.
+	// Default is 1 minute. -1 disables idle connections reaper,
+	// but idle connections are still discarded by the client
+	// if IdleTimeout is set.
+	IdleCheckFrequency time.Duration
 }
 
 // DB wraps a client for a database.
@@ -83,10 +130,15 @@ func (d dbLogger) AfterQuery(q *pg.QueryEvent) {
 // New returns a new DB object which wraps a connection to the database specified in config
 func New(config DBConfig) DB {
 	options := &pg.Options{
-		Addr:     config.Address,
-		User:     config.User,
-		Database: config.Database,
-		Password: config.Password,
+		Addr:         config.Address,
+		User:         config.User,
+		Database:     config.Database,
+		Password:     config.Password,
+		MinIdleConns: config.MinIdleConns,
+		ReadTimeout:  config.ReadTimeout,
+		WriteTimeout: config.WriteTimeout,
+		MaxConnAge:   config.MaxConnAge,
+		MaxRetries:   config.MaxRetries,
 	}
 	if config.EnableTLS {
 		options.TLSConfig = &tls.Config{InsecureSkipVerify: config.SkipVerifyTLS}
