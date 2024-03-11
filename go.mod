@@ -5,7 +5,7 @@ require (
 	github.com/aws/aws-sdk-go v1.34.0
 	github.com/cloudevents/sdk-go/protocol/kafka_sarama/v2 v2.10.0
 	github.com/cloudevents/sdk-go/v2 v2.10.0
-	github.com/go-pg/pg v8.0.3+incompatible
+	github.com/go-pg/pg v8.0.7+incompatible
 	github.com/go-redis/redis v6.15.2+incompatible
 	github.com/google/uuid v1.1.1
 	github.com/olivere/elastic v6.2.17+incompatible
