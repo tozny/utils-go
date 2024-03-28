@@ -1,12 +1,11 @@
 package database
 
 import (
-	"context"
 	"crypto/tls"
 	"time"
 
-	"github.com/go-pg/pg"
-	migrations "github.com/robinjoseph08/go-pg-migrations"
+	"github.com/go-pg/pg/v10"
+	migrations "github.com/robinjoseph08/go-pg-migrations/v3"
 	"github.com/tozny/utils-go/logging"
 )
 
@@ -55,30 +54,31 @@ type dbLogger struct {
 // context key for query timing context
 var dlTimingKey struct{} = struct{}{}
 
-// BeforeQuery is a function that will be invoked
-// before any database query is run with the query to run.
-func (d dbLogger) BeforeQuery(q *pg.QueryEvent) {
-	if q.Ctx == nil {
-		q.Ctx = context.Background()
-	}
-	q.Ctx = context.WithValue(q.Ctx, dlTimingKey, time.Now())
-}
+// // BeforeQuery is a function that will be invoked
+// // before any database query is run with the query to run.
+// func (d dbLogger) BeforeQuery(q *pg.QueryEvent) {
+// 	if q.Ctx == nil {
+// 		q.Ctx = context.Background()
+// 	}
+// 	q.Ctx = context.WithValue(q.Ctx, dlTimingKey, time.Now())
+// }
 
-// AfterQuery is a function that will be executed
-// after any database query is run with the query ran.
-func (d dbLogger) AfterQuery(q *pg.QueryEvent) {
-	query, err := q.FormattedQuery()
-	if err != nil {
-		d.logger.Errorf("error %q formatting query:\n%+v ", err, query)
-		return
-	}
-	start, ok := q.Ctx.Value(dlTimingKey).(time.Time)
-	if !ok {
-		d.logger.Errorf("Unable find timing context in query:\n%+v ", query)
-		return
-	}
-	d.logger.Infof("executed query in %s:\n%+v", time.Now().Sub(start), query)
-}
+// // AfterQuery is a function that will be executed
+// // after any database query is run with the query ran.
+// func (d dbLogger) AfterQuery(q *pg.QueryEvent) {
+// 	query, err := q.FormattedQuery()
+// 	if err != nil {
+// 		d.logger.Errorf("error %q formatting query:\n%+v ", err, query)
+// 		return
+// 	}
+
+// 	start, ok := q.Ctx.Value(dlTimingKey).(time.Time)
+// 	if !ok {
+// 		d.logger.Errorf("Unable find timing context in query:\n%+v ", query)
+// 		return
+// 	}
+// 	d.logger.Infof("executed query in %s:\n%+v", time.Now().Sub(start), query)
+// }
 
 // New returns a new DB object which wraps a connection to the database specified in config
 func New(config DBConfig) DB {
@@ -93,9 +93,9 @@ func New(config DBConfig) DB {
 	}
 
 	db := pg.Connect(options)
-	if config.EnableLogging {
-		db.AddQueryHook(dbLogger{logger: config.Logger})
-	}
+	// if config.EnableLogging {
+	// 	db.AddQueryHook(dbLogger{logger: config.Logger})
+	// }
 	return DB{
 		Client:      db,
 		Logger:      config.Logger,
