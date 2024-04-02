@@ -5,8 +5,8 @@ import (
 	"crypto/tls"
 	"time"
 
-	"github.com/go-pg/pg"
-	migrations "github.com/robinjoseph08/go-pg-migrations"
+	"github.com/go-pg/pg/v10"
+	migrations "github.com/robinjoseph08/go-pg-migrations/v3"
 	"github.com/tozny/utils-go/logging"
 )
 
@@ -46,8 +46,7 @@ func (db *DB) Migrate() error {
 	return err
 }
 
-// dbLogger implements the DBLogger pattern for the go-pg module
-// https://github.com/go-pg/pg/wiki/FAQ#how-can-i-viewlog-queries-this-library-generates
+// dbLogger implements the DBLogger interface for the go-pg module
 type dbLogger struct {
 	logger logging.Logger
 }
@@ -55,29 +54,25 @@ type dbLogger struct {
 // context key for query timing context
 var dlTimingKey struct{} = struct{}{}
 
-// BeforeQuery is a function that will be invoked
-// before any database query is run with the query to run.
-func (d dbLogger) BeforeQuery(q *pg.QueryEvent) {
-	if q.Ctx == nil {
-		q.Ctx = context.Background()
-	}
-	q.Ctx = context.WithValue(q.Ctx, dlTimingKey, time.Now())
+// BeforeQuery is called before a query is executed.
+func (d dbLogger) BeforeQuery(ctx context.Context, q *pg.QueryEvent) (context.Context, error) {
+	return context.WithValue(ctx, dlTimingKey, time.Now()), nil
 }
 
-// AfterQuery is a function that will be executed
-// after any database query is run with the query ran.
-func (d dbLogger) AfterQuery(q *pg.QueryEvent) {
+// AfterQuery is called after a query is executed.
+func (d dbLogger) AfterQuery(ctx context.Context, q *pg.QueryEvent) error {
 	query, err := q.FormattedQuery()
 	if err != nil {
 		d.logger.Errorf("error %q formatting query:\n%+v ", err, query)
-		return
+		return nil
 	}
-	start, ok := q.Ctx.Value(dlTimingKey).(time.Time)
+	start, ok := ctx.Value(dlTimingKey).(time.Time)
 	if !ok {
 		d.logger.Errorf("Unable find timing context in query:\n%+v ", query)
-		return
+		return nil
 	}
 	d.logger.Infof("executed query in %s:\n%+v", time.Now().Sub(start), query)
+	return nil
 }
 
 // New returns a new DB object which wraps a connection to the database specified in config
