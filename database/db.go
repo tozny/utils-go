@@ -71,7 +71,7 @@ func (d dbLogger) AfterQuery(ctx context.Context, q *pg.QueryEvent) error {
 		d.logger.Errorf("Unable find timing context in query:\n%+v ", query)
 		return nil
 	}
-	d.logger.Infof("executed query in %s:\n%+v", time.Now().Sub(start), query)
+	d.logger.Infof("executed query in %s:\n%+v", time.Since(start), string(query))
 	return nil
 }
 
