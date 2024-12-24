@@ -68,6 +68,24 @@ func (ec *ElasticClient) DeleteIndex(ctx context.Context, name string) error {
 	return err
 }
 
+// UpdateIndexSettings updates Elasticsearch Index settings.
+// Should not be used called outside of local environment or without caution and intention.
+func (ec *ElasticClient) UpdateIndexSettings(ctx context.Context, indexName string, settings string) error {
+	_, err := ec.Client.CloseIndex(indexName).Do(ctx)
+	if err != nil {
+		return err
+	}
+	_, err = ec.Client.IndexPutSettings(indexName).BodyString(settings).Do(ctx)
+	if err != nil {
+		return err
+	}
+	_, err = ec.Client.OpenIndex(indexName).Do(ctx)
+	if err != nil {
+		return err
+	}
+	return err
+}
+
 // AddIndexMapping adds an explicit mapping to an existing recordType within indexName.
 // https://www.elastic.co/guide/en/elasticsearch/reference/current/mapping.html
 // Most indexes should have an explicit mapping to ensure that records are enforced to a specific schema
