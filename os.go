@@ -112,3 +112,16 @@ func EnvOrDefault(key string, fallback string) string {
 	}
 	return fallback
 }
+
+// EnvOrDefaultBool fetches an environment variable value, or if not set returns the fallback boolean value.
+func EnvOrDefaultBool(key string, fallback bool) bool {
+	value, exists := os.LookupEnv(key)
+	if !exists {
+		return fallback
+	}
+	boolVal, err := strconv.ParseBool(value)
+	if err != nil {
+		panic(fmt.Sprintf("Invalid boolean value for environment variable %q: %q. To fix it remove env variable or set boolean value.", key, value))
+	}
+	return boolVal
+}
