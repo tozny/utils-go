@@ -16,6 +16,11 @@ import (
 	"github.com/tozny/utils-go/logging"
 )
 
+var (
+	// ErrorNoRows should be returned whenever no rows were found for the given query
+	ErrorNoRows = sql.ErrNoRows
+)
+
 // DB wraps a Bun client and mirrors the behaviour of the original DB type
 // implemented with go‑pg, but uses Bun under the hood.
 //
