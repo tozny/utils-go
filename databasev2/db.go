@@ -4,7 +4,7 @@ import (
 	"context"
 	"crypto/tls"
 	"database/sql"
-	"fmt"
+	"net/url"
 	"time"
 
 	"github.com/uptrace/bun"
@@ -45,9 +45,21 @@ type DBConfig struct {
 
 // New returns a Bun‑backed DB using the supplied configuration.
 func New(cfg DBConfig) DB {
-	dsn := fmt.Sprintf("postgresql://%s:%s@%s/%s", cfg.User, cfg.Password, cfg.Address, cfg.Database)
 
-	drvOpts := []pgdriver.Option{pgdriver.WithDSN(dsn)}
+	u := &url.URL{
+		Scheme: "postgresql",
+		User:   url.UserPassword(cfg.User, cfg.Password),
+		Host:   cfg.Address,
+		Path:   cfg.Database,
+	}
+
+	q := u.Query()
+	if !cfg.EnableTLS {
+		q.Set("sslmode", "disable")
+	}
+	u.RawQuery = q.Encode()
+
+	drvOpts := []pgdriver.Option{pgdriver.WithDSN(u.String())}
 	if cfg.EnableTLS {
 		drvOpts = append(drvOpts, pgdriver.WithTLSConfig(&tls.Config{InsecureSkipVerify: cfg.SkipVerifyTLS}))
 	}
