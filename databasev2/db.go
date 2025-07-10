@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/tls"
 	"database/sql"
+	"fmt"
 	"net/url"
 	"time"
 
@@ -74,7 +75,7 @@ func New(cfg DBConfig) DB {
 	return DB{
 		Client:      bunDB,
 		Logger:      cfg.Logger,
-		initializer: RunMigrations,
+		initializer: nil,
 	}
 }
 
@@ -85,22 +86,41 @@ func (db *DB) Close() {
 }
 
 // Migrate applies migrations passed by the calling service.
-func (db *DB) Migrate() error {
+func (db *DB) Migrate(migrations *migrate.Migrations) error {
 	ctx := context.Background()
-	migrator := migrate.NewMigrator(db.Client, nil)
+	migrator := migrate.NewMigrator(db.Client, migrations, migrate.WithMarkAppliedOnSuccess(true))
 
 	if err := migrator.Init(ctx); err != nil {
-		return err
+		panic(fmt.Errorf("migration init failed: %w", err))
 	}
-	_, err := migrator.Migrate(ctx)
+
+	group, err := migrator.Migrate(ctx)
+	if err != nil {
+		// If at least one migration was attempted, the last one in the group is likely the failure
+		if len(group.Migrations) > 0 {
+			last := group.Migrations[len(group.Migrations)-1]
+			panic(fmt.Errorf("migration %q failed: %w", last.Name, err))
+		}
+		// Else generic panic
+		panic(fmt.Errorf("migration failed before applying any: %w", err))
+	}
+
+	if len(group.Migrations) == 0 {
+		fmt.Println("🔹 No new migrations to apply.")
+		return nil
+	}
+
+	for _, m := range group.Migrations {
+		fmt.Printf("Applied migration: %s\n", m.Name)
+	}
 	return err
 }
 
 // RunMigrations retries migrations using a supplied migration collection.
-func RunMigrations(db *DB) {
+func RunMigrations(db *DB, migrations *migrate.Migrations) {
 	for {
 		db.Logger.Debug("DB.RunMigrations: Running migrations.")
-		if err := db.Migrate(); err != nil {
+		if err := db.Migrate(migrations); err != nil {
 			db.Logger.Errorf("DB.RunMigrations: error %v running migrations, will retry in 1 second.", err)
 			time.Sleep(1 * time.Second)
 			continue
