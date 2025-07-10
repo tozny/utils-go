@@ -80,7 +80,7 @@ func New(cfg DBConfig) DB {
 
 // Close shuts down connections held by the underlying *bun.DB.
 func (db *DB) Close() {
-	db.Logger.Debug("Closing database connection (Bun/v2)")
+	db.Logger.Debug("Closing databasev2 connection.")
 	_ = db.Client.Close()
 }
 
@@ -101,7 +101,7 @@ func RunMigrations(db *DB, migrations *migrate.Migrations) {
 	for {
 		db.Logger.Debug("DB.RunMigrations: Running migrations.")
 		if err := db.Migrate(migrations); err != nil {
-			db.Logger.Errorf("DB.RunMigrations: error %v running migrations, will retry in 1 second.", err)
+			db.Logger.Errorf("DB.RunMigrations: %v, will retry in 1 second.", err)
 			time.Sleep(1 * time.Second)
 			continue
 		}
