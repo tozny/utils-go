@@ -74,7 +74,7 @@ func New(cfg DBConfig) DB {
 	return DB{
 		Client:      bunDB,
 		Logger:      cfg.Logger,
-		initializer: nil,
+		initializer: RunMigrations,
 	}
 }
 
@@ -85,9 +85,9 @@ func (db *DB) Close() {
 }
 
 // Migrate applies migrations passed by the calling service.
-func (db *DB) Migrate(migrations *migrate.Migrations) error {
+func (db *DB) Migrate() error {
 	ctx := context.Background()
-	migrator := migrate.NewMigrator(db.Client, migrations)
+	migrator := migrate.NewMigrator(db.Client, nil)
 
 	if err := migrator.Init(ctx); err != nil {
 		return err
@@ -97,10 +97,10 @@ func (db *DB) Migrate(migrations *migrate.Migrations) error {
 }
 
 // RunMigrations retries migrations using a supplied migration collection.
-func RunMigrations(db *DB, migrations *migrate.Migrations) {
+func RunMigrations(db *DB) {
 	for {
 		db.Logger.Debug("DB.RunMigrations: Running migrations.")
-		if err := db.Migrate(migrations); err != nil {
+		if err := db.Migrate(); err != nil {
 			db.Logger.Errorf("DB.RunMigrations: error %v running migrations, will retry in 1 second.", err)
 			time.Sleep(1 * time.Second)
 			continue
