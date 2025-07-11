@@ -91,7 +91,7 @@ func (db *DB) Migrate(migrations *migrate.Migrations) error {
 	migrator := migrate.NewMigrator(db.Client, migrations, migrate.WithMarkAppliedOnSuccess(true))
 
 	if err := migrator.Init(ctx); err != nil {
-		panic(fmt.Errorf("migration init failed: %w", err))
+		return fmt.Errorf("migration init failed: %w", err)
 	}
 
 	group, err := migrator.Migrate(ctx)
@@ -99,14 +99,14 @@ func (db *DB) Migrate(migrations *migrate.Migrations) error {
 		// If at least one migration was attempted, the last one in the group is likely the failure
 		if len(group.Migrations) > 0 {
 			last := group.Migrations[len(group.Migrations)-1]
-			panic(fmt.Errorf("migration %q failed: %w", last.Name, err))
+			return fmt.Errorf("migration %q failed: %w", last.Name, err)
 		}
 		// Else generic panic
-		panic(fmt.Errorf("migration failed before applying any: %w", err))
+		return fmt.Errorf("migration failed before applying any: %w", err)
 	}
 
 	if len(group.Migrations) == 0 {
-		fmt.Println("🔹 No new migrations to apply.")
+		fmt.Println("No new migrations to apply.")
 		return nil
 	}
 
@@ -144,5 +144,6 @@ func (db *DB) Initializer(init func(*DB)) {
 
 // Ping verifies that the database is reachable.
 func (db *DB) Ping() error {
-	return db.Client.Ping()
+	_, err := db.Client.Exec("SELECT 1")
+	return err
 }
