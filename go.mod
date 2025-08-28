@@ -4,7 +4,7 @@ go 1.24.6
 
 require (
 	github.com/Shopify/sarama v1.27.2
-	github.com/aws/aws-sdk-go v1.34.0
+	github.com/aws/aws-sdk-go v1.44.218
 	github.com/cloudevents/sdk-go/protocol/kafka_sarama/v2 v2.10.0
 	github.com/cloudevents/sdk-go/v2 v2.10.0
 	github.com/go-pg/pg/v10 v10.15.0
@@ -31,7 +31,7 @@ require (
 	github.com/imdario/mergo v0.3.8 // indirect
 	github.com/jcmturner/gofork v1.0.0 // indirect
 	github.com/jinzhu/inflection v1.0.0 // indirect
-	github.com/jmespath/go-jmespath v0.3.0 // indirect
+	github.com/jmespath/go-jmespath v0.4.0 // indirect
 	github.com/json-iterator/go v1.1.10 // indirect
 	github.com/kballard/go-shellquote v0.0.0-20180428030007-95032a82bc51 // indirect
 	github.com/klauspost/compress v1.11.0 // indirect
