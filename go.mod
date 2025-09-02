@@ -6,7 +6,7 @@ require (
 	github.com/Shopify/sarama v1.27.2
 	github.com/aws/aws-sdk-go v1.44.218
 	github.com/cloudevents/sdk-go/protocol/kafka_sarama/v2 v2.10.0
-	github.com/cloudevents/sdk-go/v2 v2.10.0
+	github.com/cloudevents/sdk-go/v2 v2.15.2
 	github.com/go-pg/pg/v10 v10.15.0
 	github.com/go-redis/redis v6.15.2+incompatible
 	github.com/google/uuid v1.1.1
