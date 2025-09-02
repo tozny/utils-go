@@ -1,18 +1,20 @@
 module github.com/tozny/utils-go
 
+go 1.24.6
+
 require (
 	github.com/Shopify/sarama v1.27.2
-	github.com/aws/aws-sdk-go v1.34.0
+	github.com/aws/aws-sdk-go v1.44.218
 	github.com/cloudevents/sdk-go/protocol/kafka_sarama/v2 v2.10.0
 	github.com/cloudevents/sdk-go/v2 v2.10.0
-	github.com/go-pg/pg/v10 v10.12.0
+	github.com/go-pg/pg/v10 v10.15.0
 	github.com/go-redis/redis v6.15.2+incompatible
 	github.com/google/uuid v1.1.1
 	github.com/olivere/elastic v6.2.17+incompatible
 	github.com/pascaldekloe/jwt v1.10.0
 	github.com/robinjoseph08/go-pg-migrations/v3 v3.0.0
 	go.uber.org/zap v1.16.0
-	golang.org/x/crypto v0.17.0
+	golang.org/x/crypto v0.41.0
 )
 
 require (
@@ -29,7 +31,7 @@ require (
 	github.com/imdario/mergo v0.3.8 // indirect
 	github.com/jcmturner/gofork v1.0.0 // indirect
 	github.com/jinzhu/inflection v1.0.0 // indirect
-	github.com/jmespath/go-jmespath v0.3.0 // indirect
+	github.com/jmespath/go-jmespath v0.4.0 // indirect
 	github.com/json-iterator/go v1.1.10 // indirect
 	github.com/kballard/go-shellquote v0.0.0-20180428030007-95032a82bc51 // indirect
 	github.com/klauspost/compress v1.11.0 // indirect
@@ -54,8 +56,8 @@ require (
 	github.com/vmihailenco/tagparser/v2 v2.0.0 // indirect
 	go.uber.org/atomic v1.7.0 // indirect
 	go.uber.org/multierr v1.6.0 // indirect
-	golang.org/x/net v0.17.0 // indirect
-	golang.org/x/sys v0.15.0 // indirect
+	golang.org/x/net v0.42.0 // indirect
+	golang.org/x/sys v0.35.0 // indirect
 	golang.org/x/tools v0.1.12 // indirect
 	gopkg.in/AlecAivazis/survey.v1 v1.8.7 // indirect
 	gopkg.in/jcmturner/aescts.v1 v1.0.1 // indirect
@@ -66,11 +68,3 @@ require (
 	gopkg.in/yaml.v2 v2.3.0 // indirect
 	mellium.im/sasl v0.3.1 // indirect
 )
-
-replace golang.org/x/net => golang.org/x/net v0.7.0
-
-replace golang.org/x/sys => golang.org/x/sys v0.0.0-20220412211240-33da011f77ad
-
-replace mellium.im/sasl => mellium.im/sasl v0.3.1
-
-go 1.18
