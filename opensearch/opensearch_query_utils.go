@@ -22,11 +22,7 @@ type Bool struct {
 }
 
 type MatchQueryClause struct {
-	Query MatchQuery `json:"query"`
-}
-
-type MatchQuery struct {
-	Match map[string]interface{} `json:"match"`
+	Query map[string]interface{} `json:"query"`
 }
 
 type NestedClause struct {
@@ -47,7 +43,7 @@ func NewBoolClause(boolInput Bool) BoolClause {
 }
 
 func NewMatchQueryClause(field string, value string) MatchQueryClause {
-	return MatchQueryClause{Query: MatchQuery{Match: BuildMatchClause(field, value)}}
+	return MatchQueryClause{Query: BuildMatchClause(field, value)}
 }
 
 func NewNestedClause(nested Nested) NestedClause {

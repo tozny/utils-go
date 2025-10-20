@@ -110,10 +110,15 @@ func (osc *OpenSearchClient) CreateIndexWithSettings(ctx context.Context, name s
 // DeleteIndex deletes OpenSearch Index.
 // Should not be used called outside of local environment or without caution and intention.
 func (osc *OpenSearchClient) DeleteIndex(ctx context.Context, name string) error {
+	ignoreUnavailable := boolPointer(true)
+	deleteParams := opensearchapi.IndicesDeleteParams{
+		AllowNoIndices: ignoreUnavailable,
+	}
 	deleteResponse, err := osc.Client.Indices.Delete(
 		ctx,
 		opensearchapi.IndicesDeleteReq{
 			Indices: []string{name},
+			Params:  deleteParams,
 		})
 	if err != nil {
 		return err
@@ -135,10 +140,13 @@ func (osc *OpenSearchClient) AddIndexMapping(ctx context.Context, indexName stri
 			Indices: []string{indexName},
 			Body:    mappingReader,
 		})
+	if err != nil {
+		return err
+	}
 	if !mappingResp.Acknowledged {
 		return fmt.Errorf("add index mapping was never acknowledged")
 	}
-	return err
+	return nil
 }
 
 func (osc *OpenSearchClient) BulkIndexForIndex(ctx context.Context, index string, docs []BulkItem) (map[string]error, error) {
@@ -412,3 +420,5 @@ func getCredentialProvider(accessKey, secretAccessKey, token string) aws.Credent
 		return *c, nil
 	}
 }
+
+func boolPointer(v bool) *bool { return &v }
