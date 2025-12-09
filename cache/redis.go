@@ -4,7 +4,7 @@ package cache
 import (
 	"crypto/tls"
 
-	"github.com/go-redis/redis"
+	"github.com/redis/go-redis/v9"
 )
 
 // Config wraps configuration for a redis client.

@@ -8,18 +8,20 @@ require (
 	github.com/cloudevents/sdk-go/protocol/kafka_sarama/v2 v2.10.0
 	github.com/cloudevents/sdk-go/v2 v2.10.0
 	github.com/go-pg/pg/v10 v10.15.0
-	github.com/go-redis/redis v6.15.2+incompatible
 	github.com/google/uuid v1.1.1
 	github.com/olivere/elastic v6.2.17+incompatible
 	github.com/pascaldekloe/jwt v1.10.0
+	github.com/redis/go-redis/v9 v9.5.1
 	github.com/robinjoseph08/go-pg-migrations/v3 v3.0.0
 	go.uber.org/zap v1.16.0
 	golang.org/x/crypto v0.41.0
 )
 
 require (
+	github.com/cespare/xxhash/v2 v2.2.0 // indirect
 	github.com/cpuguy83/go-md2man/v2 v2.0.0-20190314233015-f79a8a8ca69d // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
+	github.com/dgryski/go-rendezvous v0.0.0-20200823014737-9f7001d12a5f // indirect
 	github.com/eapache/go-resiliency v1.2.0 // indirect
 	github.com/eapache/go-xerial-snappy v0.0.0-20180814174437-776d5712da21 // indirect
 	github.com/eapache/queue v1.1.0 // indirect
