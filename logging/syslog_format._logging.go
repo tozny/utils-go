@@ -36,16 +36,19 @@ const (
 	NonTransparentFraming Framing = iota
 	OctetCountingFraming
 	DefaultFraming = NonTransparentFraming
-
-	LOG_EMERG Priority = iota
-	LOG_ALERT
-	LOG_CRIT
-	LOG_ERR
-	LOG_WARNING
-	LOG_NOTICE
-	LOG_INFO
-	LOG_DEBUG
 )
+
+const (
+	LOG_EMERG   Priority = iota // 0
+	LOG_ALERT                   // 1
+	LOG_CRIT                    // 2
+	LOG_ERR                     // 3
+	LOG_WARNING                 // 4
+	LOG_NOTICE                  // 5
+	LOG_INFO                    // 6
+	LOG_DEBUG                   // 7
+)
+
 const (
 	// Facility.
 
