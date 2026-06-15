@@ -3,13 +3,14 @@ package stream
 import (
 	"context"
 	"fmt"
-	"github.com/Shopify/sarama"
+	"log"
+
+	"github.com/IBM/sarama"
 	"github.com/cloudevents/sdk-go/protocol/kafka_sarama/v2"
 	cloudevents "github.com/cloudevents/sdk-go/v2"
 	cloudevent "github.com/cloudevents/sdk-go/v2/event"
 	"github.com/google/uuid"
 	"github.com/tozny/utils-go/logging"
-	"log"
 )
 
 const (
