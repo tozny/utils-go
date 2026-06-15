@@ -1,13 +1,19 @@
 package elasticsearch
 
 import (
+	"bytes"
 	"context"
+	"crypto/sha256"
 	"fmt"
+	"io"
+	"net/http"
 	"net/url"
+	"time"
 
-	"github.com/aws/aws-sdk-go/aws/credentials"
+	"github.com/aws/aws-sdk-go-v2/aws"
+	signerv4 "github.com/aws/aws-sdk-go-v2/aws/signer/v4"
+	"github.com/aws/aws-sdk-go-v2/credentials"
 	"github.com/olivere/elastic"
-	aws "github.com/olivere/elastic/aws/v4"
 	"github.com/tozny/utils-go/logging"
 )
 
@@ -27,6 +33,49 @@ type ElasticConfig struct {
 	AccessKey   string
 	SecretKey   string
 	ServiceName string
+}
+
+// awsV4Transport signs outbound HTTP requests with AWS Signature Version 4.
+type awsV4Transport struct {
+	signer  *signerv4.Signer
+	creds   aws.CredentialsProvider
+	region  string
+	service string
+}
+
+func (t *awsV4Transport) RoundTrip(req *http.Request) (*http.Response, error) {
+	creds, err := t.creds.Retrieve(req.Context())
+	if err != nil {
+		return nil, err
+	}
+
+	var body []byte
+	if req.Body != nil {
+		body, err = io.ReadAll(req.Body)
+		if err != nil {
+			return nil, err
+		}
+		req.Body = io.NopCloser(bytes.NewReader(body))
+	}
+
+	payloadHash := fmt.Sprintf("%x", sha256.Sum256(body))
+
+	if err := t.signer.SignHTTP(req.Context(), creds, req, payloadHash, t.service, t.region, time.Now()); err != nil {
+		return nil, err
+	}
+
+	return http.DefaultTransport.RoundTrip(req)
+}
+
+func newAWSSigningClient(accessKey, secretKey, region, service string) *http.Client {
+	return &http.Client{
+		Transport: &awsV4Transport{
+			signer:  signerv4.NewSigner(),
+			creds:   credentials.NewStaticCredentialsProvider(accessKey, secretKey, ""),
+			region:  region,
+			service: service,
+		},
+	}
 }
 
 // CreateIndex creates Elasticsearch Index if it doesn't already exist. Indexes consist of a name and must be provided with a context. The index created has default indexers and tokenizers.
@@ -95,11 +144,11 @@ func NewElasticClient(config ElasticConfig) (ElasticClient, error) {
 		client, err = elastic.NewSimpleClient(
 			elastic.SetURL(config.URL))
 	} else {
-		signingClient := aws.NewV4SigningClient(credentials.NewStaticCredentials(
-			config.AccessKey,
-			config.SecretKey,
-			"",
-		), config.Region)
+		service := config.ServiceName
+		if service == "" {
+			service = "es"
+		}
+		signingClient := newAWSSigningClient(config.AccessKey, config.SecretKey, config.Region, service)
 		client, err = elastic.NewClient(
 			elastic.SetURL(config.URL),
 			elastic.SetScheme("https"),
