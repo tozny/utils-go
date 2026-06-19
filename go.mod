@@ -12,8 +12,8 @@ require (
 	github.com/cloudevents/sdk-go/v2 v2.16.2
 	github.com/go-pg/pg/v10 v10.15.1
 	github.com/google/uuid v1.6.0
-	github.com/olivere/elastic v6.2.17+incompatible
-	github.com/pascaldekloe/jwt v1.10.0
+	github.com/olivere/elastic v6.2.37+incompatible
+	github.com/pascaldekloe/jwt v1.12.0
 	github.com/redis/go-redis/v9 v9.20.1
 	github.com/robinjoseph08/go-pg-migrations/v3 v3.1.0
 	go.uber.org/zap v1.28.0
