@@ -1,6 +1,6 @@
 module github.com/tozny/utils-go
 
-go 1.25.11
+go 1.25.0
 
 require (
 	github.com/IBM/sarama v1.50.3
@@ -14,10 +14,10 @@ require (
 	github.com/google/uuid v1.6.0
 	github.com/olivere/elastic v6.2.37+incompatible
 	github.com/pascaldekloe/jwt v1.12.0
-	github.com/redis/go-redis/v9 v9.20.1
+	github.com/redis/go-redis/v9 v9.21.0
 	github.com/robinjoseph08/go-pg-migrations/v3 v3.1.0
 	go.uber.org/zap v1.28.0
-	golang.org/x/crypto v0.53.0
+	golang.org/x/crypto v0.54.0
 )
 
 require (
@@ -74,7 +74,7 @@ require (
 	go.uber.org/atomic v1.11.0 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
 	golang.org/x/net v0.56.0 // indirect
-	golang.org/x/sys v0.46.0 // indirect
+	golang.org/x/sys v0.47.0 // indirect
 	golang.org/x/tools v0.26.0 // indirect
 	gopkg.in/AlecAivazis/survey.v1 v1.8.7 // indirect
 	gopkg.in/kyokomi/emoji.v1 v1.5.1 // indirect
