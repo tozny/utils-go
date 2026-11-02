@@ -13,6 +13,7 @@ require (
 	github.com/go-pg/pg/v10 v10.15.1
 	github.com/google/uuid v1.6.0
 	github.com/olivere/elastic v6.2.37+incompatible
+	github.com/opensearch-project/opensearch-go/v4 v4.8.1
 	github.com/pascaldekloe/jwt v1.12.0
 	github.com/redis/go-redis/v9 v9.23.0
 	github.com/robinjoseph08/go-pg-migrations/v3 v3.1.0
@@ -73,6 +74,7 @@ require (
 	go.uber.org/atomic v1.12.0 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
 	golang.org/x/net v0.59.0 // indirect
+	golang.org/x/sync v0.23.0 // indirect
 	golang.org/x/sys v0.48.0 // indirect
 	golang.org/x/tools v0.26.0 // indirect
 	gopkg.in/AlecAivazis/survey.v1 v1.8.7 // indirect
